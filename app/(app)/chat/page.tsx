@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { differenceInWeeks } from "date-fns";
 import { NavBar } from "@/components/primitives/nav-bar";
-import { Character } from "@/components/primitives/character";
 import { SpeechBubble } from "@/components/primitives/speech-bubble";
 import { MessageThread, type ChatMessage } from "@/components/chat/message-thread";
 import { ChatInput } from "@/components/chat/chat-input";
@@ -113,7 +113,15 @@ export default function ChatPage() {
       {isEmpty ? (
         <div className="flex-1 flex flex-col items-center justify-center gap-6 px-6 text-center">
           <div className="relative">
-            <Character variant="sparkle" bg="lavender" size="lg" />
+            <div className="relative size-44 motion-safe:animate-[float_6s_ease-in-out_infinite]">
+              <Image
+                src="/images/pippa-mascot.png"
+                alt="Pippa mascot"
+                fill
+                sizes="176px"
+                className="object-contain drop-shadow-[0_8px_24px_rgba(245,169,131,0.30)]"
+              />
+            </div>
             <div className="absolute -top-2 right-[-6px]">
               <SpeechBubble pointer="down">Ask me anything.</SpeechBubble>
             </div>

@@ -6,16 +6,17 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ChevronRight } from "lucide-react";
-import { Character } from "@/components/primitives/character";
+import { ChevronRight, X } from "lucide-react";
+import {
+  TrackerIcon,
+} from "@/components/icons/tracker-icon";
 import { readProfile } from "@/components/onboarding/profile-store";
 
 type CardSpec = {
   href: string;
   title: string;
   subtitle: string;
-  variant: React.ComponentProps<typeof Character>["variant"];
-  bg: NonNullable<React.ComponentProps<typeof Character>["bg"]>;
+  iconVariant: React.ComponentProps<typeof TrackerIcon>["variant"];
 };
 
 const CARDS: CardSpec[] = [
@@ -23,31 +24,29 @@ const CARDS: CardSpec[] = [
     href: "/scan/diaper",
     title: "Diaper",
     subtitle: "Show me a photo. I'll read the color and texture.",
-    variant: "bear",
-    bg: "peach",
+    iconVariant: "diaper",
   },
   {
     href: "/scan/cry",
     title: "Cry",
     subtitle: "Listen for a few seconds. I'll guess the why.",
-    variant: "bottle",
-    bg: "soft-blue",
+    iconVariant: "cry",
   },
   {
     href: "/scan/rash",
     title: "Rash",
     subtitle: "A photo and a couple of details to triage.",
-    variant: "heart",
-    bg: "rose",
+    iconVariant: "rash",
   },
   {
     href: "/chat",
     title: "Talk it through",
     subtitle: "Anything pediatric, in plain words.",
-    variant: "sparkle",
-    bg: "lavender",
+    iconVariant: "chat",
   },
 ];
+
+const QUICK_GUIDE_KEY = "pippa.scan.quickGuide.dismissed";
 
 const containerVariants = {
   hidden: { opacity: 1 },
@@ -71,13 +70,29 @@ const itemVariants = {
 
 export default function ScanCenterPage() {
   const [babyName, setBabyName] = useState<string | null>(null);
+  const [showGuide, setShowGuide] = useState(false);
 
   useEffect(() => {
     const profile = readProfile();
     if (profile.name && typeof profile.name === "string") {
       setBabyName(profile.name);
     }
+    try {
+      const dismissed = window.localStorage.getItem(QUICK_GUIDE_KEY);
+      if (!dismissed) setShowGuide(true);
+    } catch {
+      // localStorage may be unavailable in private mode — skip the guide.
+    }
   }, []);
+
+  const dismissGuide = () => {
+    setShowGuide(false);
+    try {
+      window.localStorage.setItem(QUICK_GUIDE_KEY, "1");
+    } catch {
+      // ignore
+    }
+  };
 
   const greeting = babyName ? `Hi, ${babyName}'s parent` : "Hi there";
 
@@ -94,6 +109,33 @@ export default function ScanCenterPage() {
           </p>
         </header>
 
+        {showGuide && (
+          <motion.aside
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            className="relative rounded-2xl bg-peach-soft/60 border border-peach/30 px-4 py-3 pr-10"
+            role="region"
+            aria-label="Quick guide"
+          >
+            <p className="text-micro uppercase tracking-wider text-clay font-medium">
+              Quick guide
+            </p>
+            <p className="text-small text-ink mt-1">
+              Tap a card below to start. Each one walks you through it — no
+              setup needed. Your photos and audio are never stored.
+            </p>
+            <button
+              type="button"
+              onClick={dismissGuide}
+              aria-label="Dismiss quick guide"
+              className="absolute top-2 right-2 size-7 rounded-pill grid place-items-center text-stone hover:text-ink hover:bg-cream/60"
+            >
+              <X className="size-4" aria-hidden />
+            </button>
+          </motion.aside>
+        )}
+
         <motion.ul
           variants={containerVariants}
           initial="hidden"
@@ -106,12 +148,7 @@ export default function ScanCenterPage() {
                 href={card.href}
                 className="group flex items-center gap-4 rounded-2xl bg-cream px-5 py-4 shadow-[var(--shadow-soft)] hover:bg-bone/30 transition-colors"
               >
-                <Character
-                  variant={card.variant}
-                  bg={card.bg}
-                  size="sm"
-                  float={false}
-                />
+                <TrackerIcon variant={card.iconVariant} size={56} />
                 <div className="flex-1 min-w-0 flex flex-col gap-1">
                   <p className="font-display text-h3 text-ink">{card.title}</p>
                   <p className="text-small text-stone">{card.subtitle}</p>

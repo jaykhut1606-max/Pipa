@@ -8,12 +8,12 @@
 "use client";
 
 import { useMemo, useRef } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { PrimaryCTA } from "@/components/primitives/primary-cta";
-import { Character } from "@/components/primitives/character";
 import { SpeechBubble } from "@/components/primitives/speech-bubble";
 import { GradientHero } from "@/components/primitives/gradient-hero";
 import {
@@ -108,8 +108,15 @@ export default function WelcomePage() {
         className="container-app flex-1 flex flex-col items-center justify-center gap-8 py-12"
       >
         <div className="relative">
-          <div className="w-character">
-            <Character variant="baby" bg="peach" size="xl" float />
+          <div className="w-character relative size-56 sm:size-64 motion-safe:animate-[float_6s_ease-in-out_infinite]">
+            <Image
+              src="/images/pippa-mascot.png"
+              alt="Pippa, a soft peach-colored mascot holding a heart"
+              fill
+              priority
+              sizes="(min-width: 640px) 256px, 224px"
+              className="object-contain drop-shadow-[0_8px_24px_rgba(245,169,131,0.35)]"
+            />
           </div>
           <div className="w-bubble absolute -top-3 -right-2 sm:-right-6">
             <SpeechBubble pointer="down">Hi, I&rsquo;m Pippa.</SpeechBubble>

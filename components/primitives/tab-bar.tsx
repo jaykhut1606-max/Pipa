@@ -46,7 +46,10 @@ export function TabBar() {
       className="sticky bottom-0 z-40 bg-cream/95 backdrop-blur-md border-t border-bone"
       aria-label="Primary"
     >
-      <div className="container-app h-[72px] grid grid-cols-4 items-center">
+      {/* h-20 (80px) gives the raised Scan button breathing room without
+          colliding with the side tabs' labels. overflow-visible lets the
+          button float above the bar. */}
+      <div className="container-app h-20 grid grid-cols-4 items-end pb-2 overflow-visible">
         {TABS.map(({ href, label, icon: Icon, primary }) => {
           const isActive =
             pathname === href || pathname.startsWith(href + "/");
@@ -57,12 +60,33 @@ export function TabBar() {
                 key={href}
                 href={href}
                 aria-current={isActive ? "page" : undefined}
-                aria-label={label}
-                className="flex justify-center items-center"
+                aria-label={`${label} — start a diaper, cry or rash check`}
+                className="relative h-full flex flex-col items-center justify-end gap-1"
               >
-                <span className="size-14 rounded-pill bg-peach text-ink grid place-items-center -mt-7 shadow-[var(--shadow-pop)] ring-4 ring-cream">
-                  <Icon className="size-6" strokeWidth={2.2} aria-hidden />
+                {/* Raised peach circle floats above the bar. */}
+                <span
+                  className={cn(
+                    "absolute bottom-[42px] size-12 rounded-pill bg-peach text-ink grid place-items-center shadow-[var(--shadow-pop)] ring-4 ring-cream transition-transform",
+                    "hover:scale-105"
+                  )}
+                  aria-hidden
+                >
+                  <Icon className="size-5" strokeWidth={2.4} />
                 </span>
+                <span
+                  className={cn(
+                    "text-micro uppercase tracking-wider font-medium",
+                    isActive ? "text-peach" : "text-stone"
+                  )}
+                >
+                  Scan
+                </span>
+                {isActive && (
+                  <span
+                    aria-hidden
+                    className="absolute bottom-0.5 size-1 rounded-pill bg-peach"
+                  />
+                )}
               </Link>
             );
           }
@@ -73,7 +97,7 @@ export function TabBar() {
               href={href}
               aria-current={isActive ? "page" : undefined}
               className={cn(
-                "relative h-full flex flex-col items-center justify-center gap-1 transition-colors",
+                "relative h-full flex flex-col items-center justify-end gap-1 pb-0 transition-colors",
                 isActive ? "text-peach" : "text-stone hover:text-ink"
               )}
             >
@@ -84,7 +108,7 @@ export function TabBar() {
               {isActive && (
                 <span
                   aria-hidden
-                  className="absolute bottom-1.5 size-1 rounded-pill bg-peach"
+                  className="absolute bottom-0.5 size-1 rounded-pill bg-peach"
                 />
               )}
             </Link>

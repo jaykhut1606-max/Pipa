@@ -17,6 +17,7 @@ import { FaqRow } from "@/components/landing/faq-row";
 import { PricingStrip } from "@/components/landing/pricing-strip";
 import { FinalCta } from "@/components/landing/final-cta";
 import { MarketingFooter } from "@/components/landing/footer";
+import { ChaosToCalmSection } from "@/components/landing/chaos-to-calm-section";
 
 const READS = [
   {
@@ -155,6 +156,9 @@ export default function HomePage() {
           </Reveal>
         </div>
       </section>
+
+      {/* Section: Chaos → Calm transformation */}
+      <ChaosToCalmSection />
 
       {/* Section: Testimonials */}
       <section className="container-marketing py-20 sm:py-24 flex flex-col gap-12">

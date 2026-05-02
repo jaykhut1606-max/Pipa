@@ -1,16 +1,16 @@
 "use client";
 
 // Hero — peach gradient backdrop, GSAP-staged headline → body → CTAs → art.
-// Two columns on sm+, single stack on mobile. SpeechBubble is anchored on the
-// character's top edge so the tail visually points AT the mascot, not into
-// empty space.
+// Two columns on sm+, single stack on mobile. The hero art is the
+// "mom-baby-night" illustration (cozy/intimate, parent on phone using Pippa);
+// SpeechBubble is anchored at the top so the tail visually points down at it.
 import { useRef } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { PrimaryCTA } from "@/components/primitives/primary-cta";
 import { DarkCTA } from "@/components/primitives/dark-cta";
-import { Character } from "@/components/primitives/character";
 import { SpeechBubble } from "@/components/primitives/speech-bubble";
 
 export function HeroStage() {
@@ -103,29 +103,41 @@ export function HeroStage() {
         </div>
       </div>
 
-      {/* Right column: floating mascot with anchored speech bubble */}
-      <div className="hero-art relative flex justify-center md:justify-end">
-        {/* Soft ambient halo behind the character */}
+      {/* Right column: cozy "using Pippa at night" illustration with anchored speech bubble */}
+      <div className="hero-art relative w-full flex justify-center md:justify-end">
+        {/* Soft ambient halo behind the artwork */}
         <div
           aria-hidden
           className="absolute inset-0 -z-10 grid place-items-center"
         >
-          <div className="size-[320px] md:size-[360px] rounded-full bg-vivid-peach-soft blur-3xl opacity-70" />
+          <div className="size-[340px] md:size-[400px] rounded-full bg-vivid-peach-soft blur-3xl opacity-70" />
         </div>
-        <div className="relative">
-          <Character variant="baby" bg="peach" size="xl" float />
-          {/* Speech bubble — tail points down at the character's top */}
-          <div className="hero-bubble absolute -top-6 right-2 md:-right-4">
+
+        <div className="relative w-[300px] sm:w-[360px] md:w-[420px]">
+          <div className="relative aspect-square rounded-3xl overflow-hidden shadow-[var(--shadow-pop)] ring-1 ring-bone/60 bg-cream">
+            <Image
+              src="/images/mom-baby-night.png"
+              alt="A parent in soft lamplight cradling a sleeping baby and using Pippa on their phone"
+              fill
+              priority
+              sizes="(min-width: 768px) 420px, (min-width: 640px) 360px, 300px"
+              className="object-cover"
+            />
+          </div>
+
+          {/* Speech bubble — tail points down at the artwork */}
+          <div className="hero-bubble absolute -top-4 -right-2 md:-top-5 md:-right-3 z-10">
             <SpeechBubble pointer="down">Trust your instinct.</SpeechBubble>
           </div>
-          {/* Tiny orbiting accent dots for visual richness without baby-ish */}
+
+          {/* Subtle accent dots */}
           <span
             aria-hidden
             className="absolute -bottom-2 -left-2 size-3 rounded-full bg-sage shadow-[var(--shadow-soft)]"
           />
           <span
             aria-hidden
-            className="absolute top-8 -right-3 size-2 rounded-full bg-vivid-blue/80 shadow-[var(--shadow-soft)]"
+            className="absolute top-10 -right-3 size-2 rounded-full bg-vivid-blue/80 shadow-[var(--shadow-soft)]"
           />
         </div>
       </div>

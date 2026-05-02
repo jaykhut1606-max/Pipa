@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { Logo } from "@/components/brand/logo";
 import { Wordmark } from "@/components/brand/wordmark";
-import { Character } from "@/components/primitives/character";
 import { SpeechBubble } from "@/components/primitives/speech-bubble";
 import { GradientHero } from "@/components/primitives/gradient-hero";
 import { PlanCard } from "@/components/primitives/plan-card";
@@ -68,7 +68,16 @@ export default function PaywallPage() {
         className="container-app flex-1 flex flex-col items-center text-center gap-8 pb-32"
       >
         <div className="relative">
-          <Character variant="rocket" bg="peach" size="lg" />
+          <div className="relative size-44 motion-safe:animate-[float_6s_ease-in-out_infinite]">
+            <Image
+              src="/images/pippa-mascot.png"
+              alt="Pippa mascot"
+              fill
+              priority
+              sizes="176px"
+              className="object-contain drop-shadow-[0_8px_24px_rgba(245,169,131,0.30)]"
+            />
+          </div>
           <div className="absolute -top-2 right-[-8px]">
             <SpeechBubble pointer="down">Always-on Pippa.</SpeechBubble>
           </div>
