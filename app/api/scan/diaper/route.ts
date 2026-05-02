@@ -7,7 +7,7 @@ import { NextResponse } from "next/server";
 import { openai } from "@/lib/openai/client";
 import { DIAPER_SCAN_SYSTEM_PROMPT } from "@/lib/openai/prompts/diaper";
 import { applyDiaperSafetyOverrides } from "@/lib/openai/safety";
-import { saveDemoScan } from "@/lib/scan-store";
+import { saveScan } from "@/lib/data/scans";
 import type { DiaperScanResult, ScanStatus } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -100,7 +100,7 @@ export async function POST(request: Request) {
     const status = statusFromAssessment(final.assessment.status);
 
     const scanId = crypto.randomUUID();
-    saveDemoScan({
+    await saveScan({
       id: scanId,
       scanType: "diaper",
       status,

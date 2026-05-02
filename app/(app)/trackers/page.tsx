@@ -8,10 +8,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
-import { ChevronRight, Mic } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { TrackerIcon } from "@/components/icons/tracker-icon";
 import { TimelineItem } from "@/components/primitives/timeline-item";
 import { TrackerTabs, type TrackerTab } from "@/components/trackers/tracker-tabs";
+import { VoiceEntry } from "@/components/trackers/voice-entry";
 import {
   dayLabel,
   eventOneLiner,
@@ -259,32 +260,7 @@ export default function TrackersHubPage() {
                 ))}
               </motion.ul>
 
-              <section className="flex flex-col gap-3">
-                <h2 className="font-display text-h2 text-ink">Voice Entry</h2>
-                <div className="rounded-2xl bg-cream shadow-[var(--shadow-soft)] p-6 flex flex-col items-center gap-4 text-center">
-                  <div className="relative size-44 grid place-items-center">
-                    <span
-                      aria-hidden
-                      className="absolute inset-0 rounded-pill bg-vivid-peach-soft motion-safe:animate-[listenPulse_2.2s_ease-out_infinite]"
-                    />
-                    <span
-                      aria-hidden
-                      className="absolute inset-4 rounded-pill bg-peach-soft motion-safe:animate-[listenPulse_2.2s_ease-out_infinite]"
-                      style={{ animationDelay: "0.6s" }}
-                    />
-                    <span className="relative size-20 rounded-pill bg-peach grid place-items-center shadow-[var(--shadow-pop)]">
-                      <Mic
-                        className="size-8 text-cream"
-                        strokeWidth={2.2}
-                        aria-hidden
-                      />
-                    </span>
-                  </div>
-                  <p className="text-small text-stone max-w-xs">
-                    Voice entry coming soon — for now, tap a card above.
-                  </p>
-                </div>
-              </section>
+              <VoiceEntry onLogged={() => fetchAll()} />
             </motion.div>
           )}
 

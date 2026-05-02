@@ -47,7 +47,7 @@ export function LogShell({
   }, []);
 
   return (
-    <main className="flex-1 flex flex-col bg-cream pb-32">
+    <main className="flex-1 flex flex-col bg-cream pb-44">
       <NavBar showBack backHref="/trackers" />
       <GradientHero tone={tone} className="pt-6 pb-8">
         <motion.div

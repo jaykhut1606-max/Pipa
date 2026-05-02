@@ -7,7 +7,7 @@ import {
   listEvents,
   saveEvent,
   type ListEventsOptions,
-} from "@/lib/event-store";
+} from "@/lib/data/events";
 import type {
   TrackerEvent,
   TrackerEventType,
@@ -104,7 +104,7 @@ export async function POST(request: Request) {
     durationMinutes: parsed.data.durationMinutes,
     createdAt: new Date().toISOString(),
   };
-  saveEvent(event);
+  await saveEvent(event);
   return NextResponse.json({ event });
 }
 
@@ -124,5 +124,5 @@ export async function GET(request: Request) {
     const n = Number.parseInt(limit, 10);
     if (Number.isFinite(n) && n > 0) opts.limit = Math.min(n, 1000);
   }
-  return NextResponse.json({ events: listEvents(opts) });
+  return NextResponse.json({ events: await listEvents(opts) });
 }

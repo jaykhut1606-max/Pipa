@@ -7,7 +7,7 @@ import { randomUUID } from "node:crypto";
 import { openai } from "@/lib/openai/client";
 import { RASH_ANALYZER_SYSTEM_PROMPT } from "@/lib/openai/prompts/rash";
 import { applyRashSafetyOverrides } from "@/lib/openai/safety";
-import { saveDemoScan } from "@/lib/scan-store";
+import { saveScan } from "@/lib/data/scans";
 import type {
   RashScanResult,
   ResultBadgeStatus,
@@ -141,7 +141,7 @@ export async function POST(request: Request) {
   const primaryLabel = primaryLabelFromRash(safe, status);
   const id = randomUUID();
 
-  saveDemoScan({
+  await saveScan({
     id,
     scanType: "rash",
     status,

@@ -7,7 +7,7 @@
 //   babyName: string                       (default "Baby" — used in copy)
 //   babyAgeWeeks: integer                  (optional — unlocks norm benchmarks)
 import { NextResponse } from "next/server";
-import { listEvents } from "@/lib/event-store";
+import { listEvents } from "@/lib/data/events";
 import {
   computeInsights,
   defaultRangeFor,
@@ -47,7 +47,7 @@ export async function GET(request: Request) {
     const babyAgeWeeks = parseAgeWeeks(url.searchParams.get("babyAgeWeeks"));
 
     const { start, end } = rangeWindow(range);
-    const events = listEvents({ since: start, until: end, limit: 1000 });
+    const events = await listEvents({ since: start, until: end, limit: 1000 });
 
     const response = computeInsights({
       events,

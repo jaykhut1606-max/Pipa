@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
 import { openai } from "@/lib/openai/client";
 import { CRY_ANALYZER_SYSTEM_PROMPT } from "@/lib/openai/prompts/cry";
-import { saveDemoScan } from "@/lib/scan-store";
+import { saveScan } from "@/lib/data/scans";
 import type { ResultBadgeStatus, ScanStatus } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -178,7 +178,7 @@ export async function POST(request: Request) {
   const primaryLabel = humanLabel(parsed);
   const id = randomUUID();
 
-  saveDemoScan({
+  await saveScan({
     id,
     scanType: "cry",
     status,

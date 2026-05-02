@@ -5,7 +5,8 @@ import { differenceInDays } from "date-fns";
 import { NavBar } from "@/components/primitives/nav-bar";
 import { Character } from "@/components/primitives/character";
 import { PrimaryCTA } from "@/components/primitives/primary-cta";
-import { listDemoScans, type DemoScan } from "@/lib/scan-store";
+import { type DemoScan } from "@/lib/scan-store";
+import { listScans } from "@/lib/data/scans";
 import {
   HistoryTimeline,
   type TimelineEntry,
@@ -77,8 +78,8 @@ function entryFor(scan: DemoScan): TimelineEntry {
   };
 }
 
-export default function HistoryPage() {
-  const scans = listDemoScans(30);
+export default async function HistoryPage() {
+  const scans = await listScans(30);
   const now = new Date();
   const last7 = scans.filter(
     (s) => differenceInDays(now, new Date(s.createdAt)) <= 7

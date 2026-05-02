@@ -5,7 +5,7 @@ import { Character } from "@/components/primitives/character";
 import { PrimaryCTA } from "@/components/primitives/primary-cta";
 import { NavBar } from "@/components/primitives/nav-bar";
 import { ResultScreen } from "@/components/scan/result-screen";
-import { getDemoScan } from "@/lib/scan-store";
+import { getScan } from "@/lib/data/scans";
 
 export const metadata = { title: "Result" };
 
@@ -15,7 +15,7 @@ export default async function Page({
   params: Promise<{ scanId: string }>;
 }) {
   const { scanId } = await params;
-  const scan = getDemoScan(scanId);
+  const scan = await getScan(scanId);
 
   if (!scan) {
     return (
