@@ -46,25 +46,27 @@ export async function proxy(request: NextRequest) {
     }
   );
 
-  // Touch the session so @supabase/ssr can refresh it if it's about to expire.
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  const path = request.nextUrl.pathname;
+  // Refresh the session if present, but DO NOT redirect.
+  // Demo mode: auth gate is bypassed so anyone can walk the full flow.
+  // Re-enable redirects (commented below) once Supabase URL config + migrations
+  // are confirmed and we're ready to ship.
+  await supabase.auth.getUser();
 
-  const isProtected = PROTECTED_ROUTES.some((r) => path.startsWith(r));
-  const isAuth = AUTH_ROUTES.some((r) => path.startsWith(r));
+  void PROTECTED_ROUTES;
+  void AUTH_ROUTES;
 
-  if (isProtected && !user) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/signin";
-    url.searchParams.set("next", path);
-    return NextResponse.redirect(url);
-  }
-
-  if (isAuth && user) {
-    return NextResponse.redirect(new URL("/welcome", request.url));
-  }
+  // const path = request.nextUrl.pathname;
+  // const isProtected = PROTECTED_ROUTES.some((r) => path.startsWith(r));
+  // const isAuth = AUTH_ROUTES.some((r) => path.startsWith(r));
+  // if (isProtected && !user) {
+  //   const url = request.nextUrl.clone();
+  //   url.pathname = "/signin";
+  //   url.searchParams.set("next", path);
+  //   return NextResponse.redirect(url);
+  // }
+  // if (isAuth && user) {
+  //   return NextResponse.redirect(new URL("/welcome", request.url));
+  // }
 
   return response;
 }

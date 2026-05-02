@@ -1,20 +1,23 @@
-// Belt-and-suspenders auth gate. The proxy already redirects unauth users,
-// but a server-side check here lets us hand the session down to children
-// and short-circuits before any UI renders.
-import { redirect } from "next/navigation";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+// Demo mode: auth gate is disabled so anyone can walk the flow.
+// The original gate is preserved below — re-enable when shipping.
+//
+// import { redirect } from "next/navigation";
+// import { createSupabaseServerClient } from "@/lib/supabase/server";
+//
+// const supabase = await createSupabaseServerClient();
+// const { data: { user } } = await supabase.auth.getUser();
+// if (!user) redirect("/signin");
+import { TabBar } from "@/components/primitives/tab-bar";
 
-export default async function AppLayout({
+export default function AppLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) redirect("/signin");
-
-  return <>{children}</>;
+  return (
+    <>
+      <div className="flex-1 flex flex-col">{children}</div>
+      <TabBar />
+    </>
+  );
 }
