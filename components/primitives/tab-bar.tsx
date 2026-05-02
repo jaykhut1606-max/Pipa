@@ -2,20 +2,21 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Clock, Camera, MessageCircle, User } from "lucide-react";
+import { LineChart, Camera, MessageCircle, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type Tab = {
   href: string;
   label: string;
-  icon: typeof Clock;
+  icon: typeof LineChart;
   primary?: boolean;
 };
 
-// Four-tab nav inspired by Nanni: History · Scan (centered, peach) · Chat · Profile.
-// The Scan tab sits as a raised peach pill above the bar's surface.
+// Four-tab nav: Trackers · Scan (centered, peach) · Chat · Profile.
+// Trackers absorbs both the daily log and the scan history timeline, so the
+// old standalone /history route is reachable from the Trackers · Details tab.
 const TABS: Tab[] = [
-  { href: "/history", label: "History", icon: Clock },
+  { href: "/trackers", label: "Trackers", icon: LineChart },
   { href: "/scan", label: "Scan", icon: Camera, primary: true },
   { href: "/chat", label: "Chat", icon: MessageCircle },
   { href: "/settings", label: "Profile", icon: User },
