@@ -4,8 +4,8 @@ Track which phase we're in. Update at the start and end of each phase.
 
 | Phase | Description | Status |
 |---|---|---|
-| 0 | Scaffold (Next 16, deps, structure, theme, stubs) | **awaiting validation** |
-| 1 | Database schema + Supabase auth + magic link | not started |
+| 0 | Scaffold (Next 16, deps, structure, theme, stubs) | done |
+| 1 | Database schema + Supabase auth + magic link | **awaiting validation** (migrations need to be run + Supabase URL config) |
 | 2 | Design system primitives + dev preview route | not started |
 | 3 | Welcome + 4-step onboarding | not started |
 | 4 | Diaper scan end-to-end | not started |
