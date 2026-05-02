@@ -78,7 +78,7 @@ create table public.chat_messages (
   baby_id uuid references public.babies(id) on delete set null,
   role text not null check (role in ('user', 'assistant')),
   content text not null,
-  references jsonb,
+  "references" jsonb,
   created_at timestamptz default now() not null
 );
 

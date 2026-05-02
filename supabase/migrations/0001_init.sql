@@ -85,7 +85,7 @@ create table public.chat_messages (
   content text not null,
 
   -- For RAG: which sources/scans this message references
-  references jsonb,
+  "references" jsonb,
 
   created_at timestamptz default now() not null
 );
