@@ -14,13 +14,14 @@ import {
   type BabyProfile,
 } from "@/components/onboarding/profile-store";
 
-const STEPS = ["age", "name", "feeding", "concerns"] as const;
+const STEPS = ["age", "name", "avatar", "feeding", "concerns"] as const;
 const TOTAL = STEPS.length;
 
 const BACK_HREF: Record<(typeof STEPS)[number], string> = {
   age: "/welcome",
   name: "/onboarding/age",
-  feeding: "/onboarding/name",
+  avatar: "/onboarding/name",
+  feeding: "/onboarding/avatar",
   concerns: "/onboarding/feeding",
 };
 
@@ -69,7 +70,7 @@ export default function OnboardingLayout({
         /* ignore */
       }
     }
-    router.push("/scan");
+    router.push("/home");
   };
 
   return (

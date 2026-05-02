@@ -23,6 +23,10 @@ type Props = {
   tone: Tone;
   characterVariant?: string;
   characterBg?: string;
+  // Optional per-step illustration. Falls back to the Pippa mascot.
+  imageSrc?: string;
+  imageAlt?: string;
+  imageSize?: number;
   title: string;
   subtitle?: string;
   children: React.ReactNode;
@@ -49,6 +53,9 @@ const item: Variants = {
 
 export function StepShell({
   tone,
+  imageSrc = "/images/pippa-mascot.png",
+  imageAlt = "Pippa mascot",
+  imageSize = 176,
   title,
   subtitle,
   children,
@@ -68,13 +75,14 @@ export function StepShell({
       >
         <motion.div
           variants={item}
-          className="relative size-32 motion-safe:animate-[float_6s_ease-in-out_infinite]"
+          className="relative motion-safe:animate-[float_6s_ease-in-out_infinite]"
+          style={{ width: imageSize, height: imageSize }}
         >
           <Image
-            src="/images/pippa-mascot.png"
-            alt="Pippa mascot"
+            src={imageSrc}
+            alt={imageAlt}
             fill
-            sizes="128px"
+            sizes={`${imageSize}px`}
             className="object-contain drop-shadow-[0_6px_18px_rgba(245,169,131,0.30)]"
             priority
           />

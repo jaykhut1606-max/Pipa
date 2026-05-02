@@ -1,8 +1,8 @@
 "use client";
 
-// Feed logging flow. Method toggle drives which sub-fields are visible.
-// Breast: side + per-side minutes. Bottle: ml + contents.
-// Solids: chip multiselect of common foods.
+// Feed logging — blue themed shell. Method toggle (Nurse/Bottle/Solids)
+// drives which sub-fields are visible. Nurse: side + per-side minutes.
+// Bottle: ml + contents. Solids: chip multiselect of common foods.
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -62,23 +62,19 @@ export default function FeedLogPage() {
   const [babyName, setBabyName] = useState<string>("Baby");
   const [method, setMethod] = useState<FeedMethod | null>(null);
 
-  // Breast state
   const [side, setSide] =
     useState<NonNullable<FeedPayload["breastSide"]> | null>("left");
   const [leftMin, setLeftMin] = useState(10);
   const [rightMin, setRightMin] = useState(10);
 
-  // Bottle state
   const [bottleMl, setBottleMl] = useState(90);
   const [bottleContents, setBottleContents] =
     useState<NonNullable<FeedPayload["bottleContents"]> | null>("breast_milk");
 
-  // Solids state
   const [solids, setSolids] = useState<string[]>([]);
 
-  // Common
   const [occurredAt, setOccurredAt] = useState<Date>(() => new Date());
-  const [notes, setNotes] = useState("");
+  const [note, setNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -119,7 +115,7 @@ export default function FeedLogPage() {
       } else {
         data = { method, solidsItems: solids };
       }
-      if (notes.trim()) data.notes = notes.trim();
+      if (note.trim()) data.notes = note.trim();
 
       const res = await fetch("/api/tracker/event", {
         method: "POST",
@@ -152,15 +148,23 @@ export default function FeedLogPage() {
 
   return (
     <LogShell
-      tone="amber"
+      tone="blue"
       iconVariant="feed"
-      title="Log a feed"
-      subtitle="Breast, bottle, or first foods."
-      ctaLabel="Log feed"
+      title="Feeding"
       ctaDisabled={ctaDisabled}
       onSubmit={handleSubmit}
       loading={submitting}
+      note={note}
+      onNoteChange={setNote}
     >
+      <LogRow label="Time">
+        <QuickTimePicker
+          presets={WHEN_PRESETS}
+          value={occurredAt}
+          onChange={setOccurredAt}
+        />
+      </LogRow>
+
       <LogRow label="How are they feeding?">
         <FeedMethodToggle value={method} onChange={setMethod} />
       </LogRow>
@@ -183,7 +187,7 @@ export default function FeedLogPage() {
                 }))}
                 value={side}
                 onChange={setSide}
-                ariaLabel="Breast side"
+                ariaLabel="Side"
               />
             </LogRow>
             <div
@@ -227,7 +231,7 @@ export default function FeedLogPage() {
             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
             className="flex flex-col gap-6"
           >
-            <LogRow label="Amount">
+            <LogRow label="Quantity">
               <div className="flex flex-col gap-3">
                 <ChipGroup
                   options={BOTTLE_AMOUNTS.map((v) => ({
@@ -251,7 +255,7 @@ export default function FeedLogPage() {
                 />
               </div>
             </LogRow>
-            <LogRow label="Contents">
+            <LogRow label="Source">
               <ChipGroup
                 options={BOTTLE_CONTENTS.map((c) => ({
                   value: c.value,
@@ -260,7 +264,7 @@ export default function FeedLogPage() {
                 value={bottleContents}
                 onChange={setBottleContents}
                 allowClear
-                ariaLabel="Bottle contents"
+                ariaLabel="Bottle source"
               />
             </LogRow>
           </motion.div>
@@ -286,25 +290,6 @@ export default function FeedLogPage() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      <LogRow label="When?">
-        <QuickTimePicker
-          presets={WHEN_PRESETS}
-          value={occurredAt}
-          onChange={setOccurredAt}
-        />
-      </LogRow>
-
-      <LogRow label="Notes" optional>
-        <textarea
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          rows={3}
-          maxLength={500}
-          placeholder="Anything else worth remembering?"
-          className="w-full rounded-2xl bg-cream border border-bone px-4 py-3 text-body text-ink placeholder:text-stone resize-none focus:outline-none focus:ring-3 focus:ring-peach/30"
-        />
-      </LogRow>
     </LogShell>
   );
 }

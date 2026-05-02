@@ -1,20 +1,22 @@
 "use client";
 
-// Trackers hub. Three-tab pill (Track / Summary / Details). The Track tab
-// is a kid-readable picker: Sleep / Diaper / Feeding cards plus a stubbed
-// Voice Entry section. Summary surfaces today's totals; Details renders
-// a 7-day timeline. On first mount we GET /api/tracker/event?limit=1 and,
-// if empty, POST /api/tracker/seed?babyName=… so the demo is alive.
+// Trackers hub. Three sub-tabs:
+//   Track   — quick-pick rows (Sleep/Diaper/Feeding) + Voice Entry.
+//   Summary — week heatmap (hours × days) with All/Sleep/Diaper/Feed chips.
+//   Details — today/week/month stat cards + entry list.
+// On first mount we GET /api/tracker/event?limit=1 and, if empty,
+// POST /api/tracker/seed?babyName=… so the demo is alive.
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
-import { ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Maximize2 } from "lucide-react";
 import { TrackerIcon } from "@/components/icons/tracker-icon";
-import { TimelineItem } from "@/components/primitives/timeline-item";
-import { TrackerTabs, type TrackerTab } from "@/components/trackers/tracker-tabs";
+import {
+  TrackerTabs,
+  type TrackerTab,
+} from "@/components/trackers/tracker-tabs";
 import { VoiceEntry } from "@/components/trackers/voice-entry";
 import {
-  dayLabel,
   eventOneLiner,
   formatDuration,
   formatTime,
@@ -85,54 +87,25 @@ const CARDS: CardSpec[] = [
   },
 ];
 
-const TIMELINE_COLOR: Record<TrackerEventType, "soft-blue" | "amber" | "peach" | "sage"> = {
-  sleep: "soft-blue",
-  feed: "amber",
-  diaper: "peach",
-  note: "sage",
+const TYPE_BLOCK_COLOR: Record<TrackerEventType, string> = {
+  sleep: "bg-amber",
+  diaper: "bg-clay",
+  feed: "bg-soft-blue",
+  note: "bg-sage",
 };
 
-const TIMELINE_TITLE: Record<TrackerEventType, string> = {
-  sleep: "Sleep",
-  feed: "Feed",
+const EVENT_TITLE: Record<TrackerEventType, string> = {
+  sleep: "Sleeping",
   diaper: "Diaper",
+  feed: "Feeding",
   note: "Note",
 };
-
-type GroupedDay = {
-  key: string;
-  label: string;
-  events: TrackerEvent[];
-};
-
-function groupByDay(events: TrackerEvent[]): GroupedDay[] {
-  const map = new Map<string, TrackerEvent[]>();
-  for (const evt of events) {
-    const d = new Date(evt.occurredAt);
-    const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-    const list = map.get(key) ?? [];
-    list.push(evt);
-    map.set(key, list);
-  }
-  const out: GroupedDay[] = [];
-  for (const [key, list] of map) {
-    const first = new Date(list[0].occurredAt);
-    out.push({ key, label: dayLabel(first), events: list });
-  }
-  out.sort((a, b) =>
-    new Date(b.events[0].occurredAt).getTime() -
-    new Date(a.events[0].occurredAt).getTime()
-  );
-  return out;
-}
 
 export default function TrackersHubPage() {
   const [tab, setTab] = useState<TrackerTab>("track");
   const [babyName, setBabyName] = useState<string | null>(null);
   const [events, setEvents] = useState<TrackerEvent[] | null>(null);
-  const [todayEvents, setTodayEvents] = useState<TrackerEvent[] | null>(null);
 
-  // Read profile after mount so SSR/CSR markup matches.
   useEffect(() => {
     const profile = readProfile();
     if (typeof profile.name === "string" && profile.name.length > 0) {
@@ -141,27 +114,20 @@ export default function TrackersHubPage() {
   }, []);
 
   const fetchAll = useCallback(async () => {
-    const since = new Date(Date.now() - 7 * 86_400_000).toISOString();
-    const todayStart = startOfDay().toISOString();
-
+    const since = new Date(Date.now() - 60 * 86_400_000).toISOString();
     try {
-      const [allRes, todayRes] = await Promise.all([
-        fetch(`/api/tracker/event?since=${encodeURIComponent(since)}&limit=200`),
-        fetch(`/api/tracker/event?since=${encodeURIComponent(todayStart)}&limit=200`),
-      ]);
-      const allData = (await allRes.json()) as { events: TrackerEvent[] };
-      const todayData = (await todayRes.json()) as { events: TrackerEvent[] };
-      setEvents(allData.events ?? []);
-      setTodayEvents(todayData.events ?? []);
-      return allData.events ?? [];
+      const res = await fetch(
+        `/api/tracker/event?since=${encodeURIComponent(since)}&limit=500`
+      );
+      const data = (await res.json()) as { events: TrackerEvent[] };
+      setEvents(data.events ?? []);
+      return data.events ?? [];
     } catch {
       setEvents([]);
-      setTodayEvents([]);
       return [];
     }
   }, []);
 
-  // First-mount: ensure demo data exists, then load.
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -181,32 +147,13 @@ export default function TrackersHubPage() {
         }
         if (!cancelled) await fetchAll();
       } catch {
-        // Network hiccup — render empty state silently.
-        if (!cancelled) {
-          setEvents([]);
-          setTodayEvents([]);
-        }
+        if (!cancelled) setEvents([]);
       }
     })();
     return () => {
       cancelled = true;
     };
   }, [fetchAll]);
-
-  const summary = useMemo(() => {
-    const list = todayEvents ?? [];
-    let sleepMinutes = 0;
-    let feeds = 0;
-    let diapers = 0;
-    for (const e of list) {
-      if (e.eventType === "sleep") sleepMinutes += e.durationMinutes ?? 0;
-      if (e.eventType === "feed") feeds += 1;
-      if (e.eventType === "diaper") diapers += 1;
-    }
-    return { sleepMinutes, feeds, diapers };
-  }, [todayEvents]);
-
-  const grouped = useMemo(() => groupByDay(events ?? []), [events]);
 
   const greeting = babyName ? `Hi, ${babyName}'s parent` : "Hi there";
 
@@ -271,20 +218,8 @@ export default function TrackersHubPage() {
               initial="hidden"
               animate="show"
               exit="exit"
-              className="flex flex-col gap-5"
             >
-              <SummaryRow
-                loading={todayEvents === null}
-                sleepMinutes={summary.sleepMinutes}
-                feeds={summary.feeds}
-                diapers={summary.diapers}
-              />
-              <Link
-                href="/trackers/insights"
-                className="self-start text-small text-plum font-medium hover:underline"
-              >
-                See full insights →
-              </Link>
+              <SummaryView events={events} />
             </motion.div>
           )}
 
@@ -295,37 +230,8 @@ export default function TrackersHubPage() {
               initial="hidden"
               animate="show"
               exit="exit"
-              className="flex flex-col gap-6"
             >
-              {events === null && (
-                <p className="text-small text-stone">Loading recent activity…</p>
-              )}
-              {events && events.length === 0 && (
-                <p className="text-small text-stone">
-                  Nothing logged yet. Tap a card on the Track tab to start.
-                </p>
-              )}
-              {grouped.map((group) => (
-                <section key={group.key} className="flex flex-col gap-3">
-                  <h3 className="text-micro uppercase tracking-wider text-stone">
-                    {group.label}
-                  </h3>
-                  <div className="rounded-2xl bg-cream shadow-[var(--shadow-soft)] p-5">
-                    <ul className="flex flex-col">
-                      {group.events.map((evt, i) => (
-                        <li key={evt.id}>
-                          <TimelineItem
-                            color={TIMELINE_COLOR[evt.eventType]}
-                            title={`${TIMELINE_TITLE[evt.eventType]} · ${eventOneLiner(evt)}`}
-                            subtitle={formatTime(evt.occurredAt)}
-                            isLast={i === group.events.length - 1}
-                          />
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </section>
-              ))}
+              <DetailsView events={events} />
             </motion.div>
           )}
         </AnimatePresence>
@@ -334,59 +240,337 @@ export default function TrackersHubPage() {
   );
 }
 
-function SummaryRow({
-  loading,
-  sleepMinutes,
-  feeds,
-  diapers,
-}: {
-  loading: boolean;
-  sleepMinutes: number;
-  feeds: number;
-  diapers: number;
-}) {
-  const cards: { label: string; value: string; tone: string; iconBg: string; variant: "sleep" | "feed" | "diaper" }[] = [
-    {
-      label: "Slept today",
-      value: sleepMinutes > 0 ? formatDuration(sleepMinutes) : "0h 0m",
-      tone: "bg-soft-blue-soft",
-      iconBg: "bg-soft-blue-soft",
-      variant: "sleep",
-    },
-    {
-      label: "Feeds today",
-      value: `${feeds}`,
-      tone: "bg-amber-soft",
-      iconBg: "bg-amber-soft",
-      variant: "feed",
-    },
-    {
-      label: "Diapers today",
-      value: `${diapers}`,
-      tone: "bg-peach-soft",
-      iconBg: "bg-peach-soft",
-      variant: "diaper",
-    },
-  ];
+// --- Summary --------------------------------------------------------------
+
+type FilterKey = "all" | "sleep" | "diaper" | "feed";
+
+const FILTER_OPTIONS: { key: FilterKey; label: string; chip: string }[] = [
+  { key: "all", label: "All", chip: "bg-sage" },
+  { key: "sleep", label: "Sleep", chip: "bg-amber" },
+  { key: "diaper", label: "Diaper", chip: "bg-clay" },
+  { key: "feed", label: "Feed", chip: "bg-soft-blue" },
+];
+
+function SummaryView({ events }: { events: TrackerEvent[] | null }) {
+  const [filter, setFilter] = useState<FilterKey>("all");
+  const [weekOffset, setWeekOffset] = useState(0);
+
+  const weekStart = useMemo(() => {
+    const today = startOfDay();
+    const dow = (today.getDay() + 6) % 7;
+    const monday = new Date(today);
+    monday.setDate(today.getDate() - dow + weekOffset * 7);
+    return monday;
+  }, [weekOffset]);
+
+  const weekEnd = useMemo(() => {
+    const e = new Date(weekStart);
+    e.setDate(weekStart.getDate() + 7);
+    return e;
+  }, [weekStart]);
+
+  const filtered = useMemo(() => {
+    if (!events) return null;
+    return events.filter((e) => {
+      const t = new Date(e.occurredAt);
+      if (t < weekStart || t >= weekEnd) return false;
+      if (filter === "all") return true;
+      return e.eventType === filter;
+    });
+  }, [events, filter, weekStart, weekEnd]);
 
   return (
-    <div className="-mx-6 px-6 overflow-x-auto">
-      <ul className="flex gap-3 snap-x snap-mandatory pb-1">
-        {cards.map((card) => (
-          <li
-            key={card.label}
-            className={cn(
-              "snap-start shrink-0 w-[180px] rounded-2xl shadow-[var(--shadow-soft)] p-4 flex flex-col gap-3",
-              card.tone
-            )}
+    <div className="flex flex-col gap-5">
+      <ul
+        role="tablist"
+        aria-label="Filter events"
+        className="flex gap-2 overflow-x-auto -mx-6 px-6 pb-1"
+      >
+        {FILTER_OPTIONS.map((f) => {
+          const isActive = filter === f.key;
+          return (
+            <li key={f.key}>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                onClick={() => setFilter(f.key)}
+                className={cn(
+                  "h-11 px-4 rounded-pill border text-small font-medium inline-flex items-center gap-2 whitespace-nowrap transition-colors",
+                  isActive
+                    ? "bg-cream border-plum text-ink shadow-[var(--shadow-soft)]"
+                    : "bg-cream border-bone text-stone hover:text-ink"
+                )}
+              >
+                <span
+                  className={cn("size-2 rounded-pill", f.chip)}
+                  aria-hidden
+                />
+                {f.label}
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+
+      <section className="rounded-2xl bg-cream shadow-[var(--shadow-soft)] p-5">
+        <header className="flex items-center justify-between mb-4">
+          <button
+            type="button"
+            onClick={() => setWeekOffset((n) => n - 1)}
+            aria-label="Previous week"
+            className="size-9 rounded-pill grid place-items-center text-stone hover:text-ink hover:bg-bone/40"
           >
-            <TrackerIcon variant={card.variant} size={48} />
-            <div className="flex flex-col gap-0.5">
-              <p className="text-small text-ink/80">{card.label}</p>
-              <p className="font-display text-h2 text-ink">
-                {loading ? "—" : card.value}
-              </p>
-            </div>
+            <ChevronLeft className="size-4" aria-hidden />
+          </button>
+          <p className="font-display text-h3 text-ink">
+            {formatRange(weekStart, weekEnd)}
+          </p>
+          <button
+            type="button"
+            onClick={() => setWeekOffset((n) => Math.min(0, n + 1))}
+            aria-label="Next week"
+            disabled={weekOffset >= 0}
+            className="size-9 rounded-pill grid place-items-center text-stone hover:text-ink hover:bg-bone/40 disabled:opacity-40"
+          >
+            <ChevronRight className="size-4" aria-hidden />
+          </button>
+        </header>
+        <Heatmap weekStart={weekStart} events={filtered} />
+      </section>
+
+      <Link
+        href="/trackers/insights"
+        className="self-center text-small text-plum font-medium hover:underline"
+      >
+        See full insights →
+      </Link>
+    </div>
+  );
+}
+
+const HOUR_ROWS = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22];
+const DAY_SHORT = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+function Heatmap({
+  weekStart,
+  events,
+}: {
+  weekStart: Date;
+  events: TrackerEvent[] | null;
+}) {
+  const cells = useMemo(() => {
+    const out = new Map<string, TrackerEventType>();
+    for (const e of events ?? []) {
+      const t = new Date(e.occurredAt);
+      const dayIndex = Math.floor(
+        (startOfDay(t).getTime() - weekStart.getTime()) / 86_400_000
+      );
+      if (dayIndex < 0 || dayIndex > 6) continue;
+      const rowIndex = Math.floor(t.getHours() / 2);
+      out.set(`${rowIndex}:${dayIndex}`, e.eventType);
+    }
+    return out;
+  }, [events, weekStart]);
+
+  const today = startOfDay();
+  const dates = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(weekStart);
+    d.setDate(weekStart.getDate() + i);
+    return d;
+  });
+
+  return (
+    <div className="grid grid-cols-[44px_1fr] gap-x-2">
+      <ul className="flex flex-col">
+        {HOUR_ROWS.map((h) => (
+          <li
+            key={h}
+            className="h-7 text-micro tracking-wider text-stone leading-none flex items-center"
+          >
+            {formatHour(h)}
+          </li>
+        ))}
+        <li className="h-7 text-micro tracking-wider text-stone leading-none flex items-center">
+          12 AM
+        </li>
+      </ul>
+      <div>
+        <div className="grid grid-cols-7 gap-px bg-bone/40 rounded-md overflow-hidden">
+          {Array.from({ length: 7 * 12 }, (_, i) => {
+            const rowIndex = Math.floor(i / 7);
+            const dayIndex = i % 7;
+            const type = cells.get(`${rowIndex}:${dayIndex}`);
+            return (
+              <span
+                key={i}
+                className={cn("h-7 bg-cream", type && TYPE_BLOCK_COLOR[type])}
+                aria-hidden
+              />
+            );
+          })}
+        </div>
+        <ul className="grid grid-cols-7 mt-2">
+          {dates.map((d, i) => {
+            const isToday =
+              startOfDay(d).getTime() === today.getTime();
+            return (
+              <li key={i} className="text-center">
+                <p
+                  className={cn(
+                    "text-micro tracking-wider",
+                    isToday ? "text-plum font-medium" : "text-stone"
+                  )}
+                >
+                  {DAY_SHORT[i]}
+                </p>
+                <p
+                  className={cn(
+                    "text-small",
+                    isToday ? "text-plum font-medium" : "text-ink"
+                  )}
+                >
+                  {d.getDate()}
+                </p>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
+function formatHour(h: number): string {
+  if (h === 0) return "12 AM";
+  if (h === 12) return "12 PM";
+  if (h < 12) return `${h} AM`;
+  return `${h - 12} PM`;
+}
+
+function formatRange(start: Date, endExclusive: Date): string {
+  const last = new Date(endExclusive.getTime() - 86_400_000);
+  const sameMonth = start.getMonth() === last.getMonth();
+  const month = start.toLocaleDateString(undefined, { month: "long" });
+  if (sameMonth) {
+    return `${month} ${start.getDate()}-${last.getDate()}, ${last.getFullYear()}`;
+  }
+  const a = start.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+  });
+  const b = last.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+  });
+  return `${a} – ${b}, ${last.getFullYear()}`;
+}
+
+// --- Details --------------------------------------------------------------
+
+type Granularity = "daily" | "weekly" | "monthly";
+
+const GRANULARITY: { key: Granularity; label: string }[] = [
+  { key: "daily", label: "Daily" },
+  { key: "weekly", label: "Weekly" },
+  { key: "monthly", label: "Monthly" },
+];
+
+function DetailsView({ events }: { events: TrackerEvent[] | null }) {
+  const [granularity, setGranularity] = useState<Granularity>("daily");
+
+  const range = useMemo(() => rangeFor(granularity), [granularity]);
+
+  const inRange = useMemo(() => {
+    if (!events) return null;
+    return events.filter((e) => {
+      const t = new Date(e.occurredAt);
+      return t >= range.start && t < range.end;
+    });
+  }, [events, range]);
+
+  const stats = useMemo(() => {
+    const days = Math.max(1, daysBetween(range.start, range.end));
+    let sleepMins = 0;
+    let diapers = 0;
+    let feeds = 0;
+    for (const e of inRange ?? []) {
+      if (e.eventType === "sleep") sleepMins += e.durationMinutes ?? 0;
+      if (e.eventType === "diaper") diapers += 1;
+      if (e.eventType === "feed") feeds += 1;
+    }
+    return {
+      sleepHrPerDay: sleepMins / 60 / days,
+      diapersPerDay: diapers / days,
+      feedsPerDay: feeds / days,
+    };
+  }, [inRange, range]);
+
+  const sortedEntries = useMemo(() => {
+    return [...(inRange ?? [])].sort(
+      (a, b) =>
+        new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime()
+    );
+  }, [inRange]);
+
+  return (
+    <div className="flex flex-col gap-5">
+      <section className="rounded-2xl bg-bone/40 px-4 pt-5 pb-4 flex flex-col gap-4 items-center">
+        <p className="font-display text-h3 text-ink">{rangeLabel(range)}</p>
+        <ul className="grid grid-cols-3 gap-3 w-full">
+          <StatCard
+            variant="sleep"
+            value={`${stats.sleepHrPerDay.toFixed(1)}h/d`}
+          />
+          <StatCard
+            variant="diaper"
+            value={`${stats.diapersPerDay.toFixed(1)}x/d`}
+          />
+          <StatCard
+            variant="feed"
+            value={`${stats.feedsPerDay.toFixed(1)}x/d`}
+          />
+        </ul>
+        <div
+          role="tablist"
+          aria-label="Granularity"
+          className="grid grid-cols-3 w-full"
+        >
+          {GRANULARITY.map((g) => {
+            const isActive = g.key === granularity;
+            return (
+              <button
+                key={g.key}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                onClick={() => setGranularity(g.key)}
+                className={cn(
+                  "h-10 rounded-pill text-small font-medium transition-colors",
+                  isActive
+                    ? "bg-plum text-cream shadow-[var(--shadow-soft)]"
+                    : "text-stone hover:text-ink"
+                )}
+              >
+                {g.label}
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      <ul className="flex flex-col gap-3">
+        {events === null && (
+          <li className="text-small text-stone text-center py-6">Loading…</li>
+        )}
+        {events !== null && sortedEntries.length === 0 && (
+          <li className="text-small text-stone text-center py-6">
+            Nothing logged in this window yet.
+          </li>
+        )}
+        {sortedEntries.map((evt) => (
+          <li key={evt.id}>
+            <EntryRow event={evt} />
           </li>
         ))}
       </ul>
@@ -394,3 +578,116 @@ function SummaryRow({
   );
 }
 
+function StatCard({
+  variant,
+  value,
+}: {
+  variant: "sleep" | "diaper" | "feed";
+  value: string;
+}) {
+  const pillTone =
+    variant === "sleep"
+      ? "bg-amber-soft"
+      : variant === "diaper"
+        ? "bg-clay-soft"
+        : "bg-soft-blue-soft";
+  return (
+    <li className="rounded-2xl bg-cream shadow-[var(--shadow-soft)] p-3 flex flex-col gap-2 relative">
+      <TrackerIcon variant={variant} size={32} />
+      <span
+        className={cn(
+          "self-start rounded-pill px-2.5 py-0.5 text-small font-medium text-ink",
+          pillTone
+        )}
+      >
+        {value}
+      </span>
+      <Maximize2
+        className="absolute top-2 right-2 size-3.5 text-stone"
+        aria-hidden
+      />
+    </li>
+  );
+}
+
+function EntryRow({ event }: { event: TrackerEvent }) {
+  const dateText = new Date(event.occurredAt).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+  });
+  const time = formatTime(event.occurredAt);
+  const duration = event.durationMinutes
+    ? formatDuration(event.durationMinutes)
+    : null;
+  const detail = eventOneLiner(event);
+  return (
+    <article className="rounded-2xl bg-cream shadow-[var(--shadow-soft)] p-4 flex items-center gap-4">
+      <TrackerIcon variant={event.eventType} size={48} />
+      <div className="flex-1 min-w-0 flex flex-col gap-0.5">
+        <p className="font-display text-h3 text-plum truncate">
+          {EVENT_TITLE[event.eventType]}
+        </p>
+        <p className="text-small text-stone truncate">
+          {dateText} · {time}
+          {detail ? ` · ${detail}` : ""}
+        </p>
+      </div>
+      {duration && (
+        <p className="text-small text-stone shrink-0">{duration}</p>
+      )}
+    </article>
+  );
+}
+
+function rangeFor(g: Granularity): { start: Date; end: Date } {
+  const today = startOfDay();
+  if (g === "daily") {
+    const end = new Date(today);
+    end.setDate(today.getDate() + 1);
+    return { start: today, end };
+  }
+  if (g === "weekly") {
+    const dow = (today.getDay() + 6) % 7;
+    const start = new Date(today);
+    start.setDate(today.getDate() - dow);
+    const end = new Date(start);
+    end.setDate(start.getDate() + 7);
+    return { start, end };
+  }
+  const start = new Date(today.getFullYear(), today.getMonth(), 1);
+  const end = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+  return { start, end };
+}
+
+function rangeLabel(r: { start: Date; end: Date }): string {
+  const last = new Date(r.end.getTime() - 1);
+  const sameDay =
+    r.start.getFullYear() === last.getFullYear() &&
+    r.start.getMonth() === last.getMonth() &&
+    r.start.getDate() === last.getDate();
+  if (sameDay) {
+    return r.start.toLocaleDateString(undefined, {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+    });
+  }
+  const sameMonth = r.start.getMonth() === last.getMonth();
+  if (sameMonth) {
+    const month = r.start.toLocaleDateString(undefined, { month: "long" });
+    return `${month} ${r.start.getDate()}–${last.getDate()}, ${last.getFullYear()}`;
+  }
+  const a = r.start.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+  });
+  const b = last.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+  });
+  return `${a} – ${b}, ${last.getFullYear()}`;
+}
+
+function daysBetween(a: Date, b: Date): number {
+  return Math.max(1, Math.round((b.getTime() - a.getTime()) / 86_400_000));
+}

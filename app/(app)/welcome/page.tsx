@@ -95,7 +95,7 @@ export default function WelcomePage() {
         /* ignore */
       }
     }
-    router.push("/scan");
+    router.push("/home");
   };
 
   return (

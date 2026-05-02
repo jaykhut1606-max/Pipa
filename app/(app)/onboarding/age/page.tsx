@@ -78,8 +78,8 @@ export default function AgePage() {
   return (
     <StepShell
       tone="rose"
-      characterVariant="moon"
-      characterBg="rose"
+      imageSrc="/images/onboarding-dob.png"
+      imageAlt="Sleeping baby beside a calendar"
       title="When was your baby born?"
       subtitle="We use this for age-appropriate context — it never leaves your phone."
       footer={

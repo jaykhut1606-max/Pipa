@@ -46,14 +46,14 @@ export default function ConcernsPage() {
       concerns: selected,
       onboardedAt: new Date().toISOString(),
     });
-    router.push("/scan");
+    router.push("/home");
   };
 
   return (
     <StepShell
       tone="lavender"
-      characterVariant="heart"
-      characterBg="lavender"
+      imageSrc="/images/onboarding-concerns.png"
+      imageAlt="Baby with thought bubbles for sleep, milk, and play"
       title="What&rsquo;s on your mind lately?"
       subtitle="Pick anything that resonates — or none, and we'll figure it out together."
       footer={

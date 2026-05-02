@@ -93,6 +93,8 @@ export type SleepPayload = {
 
 export type DiaperPayload = {
   kind: "wet" | "dirty" | "mixed";
+  // Diaper saturation / load size, applies to all kinds.
+  size?: "small" | "medium" | "large";
   // For dirty/mixed only:
   consistency?: "watery" | "loose" | "soft" | "formed" | "hard" | "pellets";
   color?: string; // common name (e.g. "mustard yellow")

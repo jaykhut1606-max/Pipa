@@ -14,7 +14,7 @@ const OPTIONS: {
   caption: string;
   tone: string;
 }[] = [
-  { value: "breast", label: "Breast", caption: "Left, right, or both", tone: "bg-rose-soft" },
+  { value: "breast", label: "Nurse", caption: "Left, right, or both", tone: "bg-rose-soft" },
   { value: "bottle", label: "Bottle", caption: "Breast milk or formula", tone: "bg-amber-soft" },
   { value: "solids", label: "Solids", caption: "Foods sampled", tone: "bg-sage-soft" },
 ];

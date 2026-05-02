@@ -1,8 +1,9 @@
 "use client";
 
-// Sleep logging flow. Computes occurredAt from a "when did sleep start"
-// preset (or custom time) plus a duration chip; POSTs the canonical
-// SleepPayload + durationMinutes to /api/tracker/event.
+// Sleep logging — yellow themed shell. Computes occurredAt from a "when
+// did sleep start" preset (or custom time) plus a duration chip; POSTs
+// the canonical SleepPayload + durationMinutes to /api/tracker/event.
+// A central circular display previews the resulting hh:mm.
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -60,6 +61,7 @@ export default function SleepLogPage() {
     useState<NonNullable<SleepPayload["location"]> | null>("crib");
   const [quality, setQuality] =
     useState<NonNullable<SleepPayload["quality"]> | null>(null);
+  const [note, setNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -87,6 +89,7 @@ export default function SleepLogPage() {
         endedAt,
         ...(location ? { location } : {}),
         ...(quality ? { quality } : {}),
+        ...(note.trim() ? { notes: note.trim() } : {}),
       };
 
       const res = await fetch("/api/tracker/event", {
@@ -120,15 +123,17 @@ export default function SleepLogPage() {
 
   return (
     <LogShell
-      tone="blue"
+      tone="yellow"
       iconVariant="sleep"
-      title="Log a sleep"
-      subtitle="Naps and nights both count."
-      ctaLabel="Log sleep"
+      title="Sleep"
       ctaDisabled={ctaDisabled}
       onSubmit={handleSubmit}
       loading={submitting}
+      note={note}
+      onNoteChange={setNote}
     >
+      <DurationDial minutes={durationMinutes} />
+
       <LogRow label="When did sleep start?">
         <QuickTimePicker
           presets={START_PRESETS}
@@ -169,5 +174,20 @@ export default function SleepLogPage() {
         />
       </LogRow>
     </LogShell>
+  );
+}
+
+function DurationDial({ minutes }: { minutes: number }) {
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  const hh = String(h).padStart(2, "0");
+  const mm = String(m).padStart(2, "0");
+  return (
+    <div className="self-center my-2 size-56 rounded-full bg-cream/70 shadow-[var(--shadow-soft)] flex flex-col items-center justify-center">
+      <p className="font-display text-hero text-ink leading-none">
+        {hh}h{mm}m
+      </p>
+      <p className="text-small text-stone mt-2">00s</p>
+    </div>
   );
 }

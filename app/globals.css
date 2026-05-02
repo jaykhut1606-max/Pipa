@@ -217,6 +217,28 @@
   }
 }
 
+/* Print styles — used by the pediatrician export. We strip backgrounds,
+   fix text to ink, and let interactive elements inherit so the printed
+   page reads cleanly. */
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  .print\:hidden,
+  nav[aria-label="Primary"],
+  [role="dialog"] {
+    display: none !important;
+  }
+  main {
+    padding-bottom: 0 !important;
+  }
+  a {
+    text-decoration: none !important;
+    color: inherit !important;
+  }
+}
+
 /* Reduced motion — global override (spec Part 3.5) */
 @media (prefers-reduced-motion: reduce) {
   *,

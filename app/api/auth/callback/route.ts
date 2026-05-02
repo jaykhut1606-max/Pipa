@@ -39,6 +39,6 @@ export async function GET(request: Request) {
     .maybeSingle();
 
   // Returning users skip /welcome; first-timers see the intro.
-  const target = profile?.onboarded_at ? "/scan" : "/welcome";
+  const target = profile?.onboarded_at ? "/home" : "/welcome";
   return NextResponse.redirect(`${origin}${target}`);
 }

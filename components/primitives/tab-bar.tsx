@@ -2,28 +2,28 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LineChart, Camera, MessageCircle, User } from "lucide-react";
+import { ClipboardList, Home, MessageCircle, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type Tab = {
   href: string;
   label: string;
-  icon: typeof LineChart;
-  primary?: boolean;
+  icon: typeof Home;
 };
 
-// Four-tab nav: Trackers · Scan (centered, peach) · Chat · Profile.
-// Trackers absorbs both the daily log and the scan history timeline, so the
-// old standalone /history route is reachable from the Trackers · Details tab.
+// Four-tab nav. Matches the reference IA: Home is the dashboard, Trackers
+// rolls up Track / Summary / Details, Milestones is the per-bucket
+// development tracker, Chat is the pediatric AI thread. Profile is reached
+// via the Home header pill rather than a tab — same as the reference.
 const TABS: Tab[] = [
-  { href: "/trackers", label: "Trackers", icon: LineChart },
-  { href: "/scan", label: "Scan", icon: Camera, primary: true },
+  { href: "/home", label: "Home", icon: Home },
+  { href: "/trackers", label: "Trackers", icon: ClipboardList },
+  { href: "/milestones", label: "Milestones", icon: Sparkles },
   { href: "/chat", label: "Chat", icon: MessageCircle },
-  { href: "/settings", label: "Profile", icon: User },
 ];
 
-// Routes that suppress the bar entirely — capture / analyzing / result reveal
-// want full immersion.
+// Routes that suppress the bar entirely — themed entry screens, capture
+// flows, results, paywall, and onboarding all want full immersion.
 const HIDE_ON = [
   "/scan/diaper",
   "/scan/cry",
@@ -35,6 +35,10 @@ const HIDE_ON = [
   "/signin",
   "/verify",
   "/dev",
+  "/trackers/sleep/log",
+  "/trackers/diaper/log",
+  "/trackers/feed/log",
+  "/profile",
 ];
 
 export function TabBar() {
@@ -43,62 +47,20 @@ export function TabBar() {
 
   return (
     <nav
-      className="sticky bottom-0 z-40 bg-cream/95 backdrop-blur-md border-t border-bone"
+      className="sticky bottom-0 z-40 bg-cream/95 backdrop-blur-md border-t border-bone print:hidden"
       aria-label="Primary"
     >
-      {/* h-20 (80px) gives the raised Scan button breathing room without
-          colliding with the side tabs' labels. overflow-visible lets the
-          button float above the bar. */}
-      <div className="container-app h-20 grid grid-cols-4 items-end pb-2 overflow-visible">
-        {TABS.map(({ href, label, icon: Icon, primary }) => {
-          const isActive =
-            pathname === href || pathname.startsWith(href + "/");
-
-          if (primary) {
-            return (
-              <Link
-                key={href}
-                href={href}
-                aria-current={isActive ? "page" : undefined}
-                aria-label={`${label} — start a diaper, cry or rash check`}
-                className="relative h-full flex flex-col items-center justify-end gap-1"
-              >
-                {/* Raised peach circle floats above the bar. */}
-                <span
-                  className={cn(
-                    "absolute bottom-[42px] size-12 rounded-pill bg-peach text-ink grid place-items-center shadow-[var(--shadow-pop)] ring-4 ring-cream transition-transform",
-                    "hover:scale-105"
-                  )}
-                  aria-hidden
-                >
-                  <Icon className="size-5" strokeWidth={2.4} />
-                </span>
-                <span
-                  className={cn(
-                    "text-micro uppercase tracking-wider font-medium",
-                    isActive ? "text-peach" : "text-stone"
-                  )}
-                >
-                  Scan
-                </span>
-                {isActive && (
-                  <span
-                    aria-hidden
-                    className="absolute bottom-0.5 size-1 rounded-pill bg-peach"
-                  />
-                )}
-              </Link>
-            );
-          }
-
+      <div className="container-app h-16 grid grid-cols-4 items-end pb-2">
+        {TABS.map(({ href, label, icon: Icon }) => {
+          const isActive = pathname === href || pathname.startsWith(href + "/");
           return (
             <Link
               key={href}
               href={href}
               aria-current={isActive ? "page" : undefined}
               className={cn(
-                "relative h-full flex flex-col items-center justify-end gap-1 pb-0 transition-colors",
-                isActive ? "text-peach" : "text-stone hover:text-ink"
+                "relative h-full flex flex-col items-center justify-end gap-1 transition-colors",
+                isActive ? "text-plum" : "text-stone hover:text-ink"
               )}
             >
               <Icon className="size-5" strokeWidth={2.2} aria-hidden />
@@ -108,7 +70,7 @@ export function TabBar() {
               {isActive && (
                 <span
                   aria-hidden
-                  className="absolute bottom-0.5 size-1 rounded-pill bg-peach"
+                  className="absolute bottom-0.5 h-0.5 w-6 rounded-pill bg-plum"
                 />
               )}
             </Link>

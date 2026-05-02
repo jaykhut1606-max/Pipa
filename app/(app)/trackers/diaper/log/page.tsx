@@ -1,11 +1,16 @@
 "use client";
 
-// Diaper logging flow. Wet / Dirty / Both is required; consistency + color
-// + notes are optional and only shown when relevant.
+// Diaper logging — pink themed shell. Type (Pee/Poop/Mixed) is required;
+// Size (Small/Medium/Large) is optional and applies to all kinds. For
+// Poop/Mixed, Consistency + Color appear as optional reveals. A "Scan
+// diaper" link routes into the AI photo flow for parents who want a
+// reading instead of a manual log.
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+import { Camera, ChevronRight } from "lucide-react";
 import { LogShell } from "@/components/trackers/log-shell";
 import { LogRow } from "@/components/trackers/log-row";
 import { ChipGroup } from "@/components/trackers/chip-group";
@@ -18,10 +23,19 @@ import { readProfile } from "@/components/onboarding/profile-store";
 import type { DiaperPayload } from "@/lib/types";
 
 const KIND_OPTIONS = [
-  { value: "wet" as const, label: "Wet", tone: "peach-soft" as const },
-  { value: "dirty" as const, label: "Dirty", tone: "amber-soft" as const },
-  { value: "mixed" as const, label: "Both", tone: "rose-soft" as const },
+  { value: "wet" as const, label: "Pee", tone: "peach-soft" as const },
+  { value: "dirty" as const, label: "Poop", tone: "amber-soft" as const },
+  { value: "mixed" as const, label: "Mixed", tone: "rose-soft" as const },
 ];
+
+const SIZE_OPTIONS = [
+  { value: "small", label: "Small" },
+  { value: "medium", label: "Medium" },
+  { value: "large", label: "Large" },
+] as const satisfies readonly {
+  value: NonNullable<DiaperPayload["size"]>;
+  label: string;
+}[];
 
 const CONSISTENCIES = [
   { value: "watery", label: "Watery" },
@@ -30,7 +44,10 @@ const CONSISTENCIES = [
   { value: "formed", label: "Formed" },
   { value: "hard", label: "Hard" },
   { value: "pellets", label: "Pellets" },
-] as const satisfies readonly { value: NonNullable<DiaperPayload["consistency"]>; label: string }[];
+] as const satisfies readonly {
+  value: NonNullable<DiaperPayload["consistency"]>;
+  label: string;
+}[];
 
 const COLORS = [
   { value: "Yellow", label: "Yellow" },
@@ -52,11 +69,13 @@ export default function DiaperLogPage() {
   const router = useRouter();
   const [babyName, setBabyName] = useState<string>("Baby");
   const [kind, setKind] = useState<DiaperPayload["kind"] | null>(null);
+  const [size, setSize] =
+    useState<NonNullable<DiaperPayload["size"]> | null>(null);
   const [consistency, setConsistency] =
     useState<NonNullable<DiaperPayload["consistency"]> | null>(null);
   const [color, setColor] = useState<string | null>(null);
   const [occurredAt, setOccurredAt] = useState<Date>(() => new Date());
-  const [notes, setNotes] = useState("");
+  const [note, setNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -73,9 +92,10 @@ export default function DiaperLogPage() {
     try {
       const data: DiaperPayload = {
         kind,
+        ...(size ? { size } : {}),
         ...(showDirtyExtras && consistency ? { consistency } : {}),
         ...(showDirtyExtras && color ? { color } : {}),
-        ...(notes.trim() ? { notes: notes.trim() } : {}),
+        ...(note.trim() ? { notes: note.trim() } : {}),
       };
 
       const res = await fetch("/api/tracker/event", {
@@ -108,21 +128,39 @@ export default function DiaperLogPage() {
 
   return (
     <LogShell
-      tone="peach"
+      tone="pink"
       iconVariant="diaper"
-      title="Log a diaper"
-      subtitle="A few taps. Done."
-      ctaLabel="Log diaper"
+      title="Diaper"
       ctaDisabled={ctaDisabled}
       onSubmit={handleSubmit}
       loading={submitting}
+      note={note}
+      onNoteChange={setNote}
     >
-      <LogRow label="What was in there?">
+      <LogRow label="Time">
+        <QuickTimePicker
+          presets={WHEN_PRESETS}
+          value={occurredAt}
+          onChange={setOccurredAt}
+        />
+      </LogRow>
+
+      <LogRow label="Type">
         <BigCardToggle
           options={KIND_OPTIONS}
           value={kind}
           onChange={setKind}
           ariaLabel="Diaper contents"
+        />
+      </LogRow>
+
+      <LogRow label="Size" optional>
+        <ChipGroup
+          options={SIZE_OPTIONS.map((s) => ({ value: s.value, label: s.label }))}
+          value={size}
+          onChange={setSize}
+          allowClear
+          ariaLabel="Diaper size"
         />
       </LogRow>
 
@@ -161,24 +199,14 @@ export default function DiaperLogPage() {
         )}
       </AnimatePresence>
 
-      <LogRow label="When?">
-        <QuickTimePicker
-          presets={WHEN_PRESETS}
-          value={occurredAt}
-          onChange={setOccurredAt}
-        />
-      </LogRow>
-
-      <LogRow label="Notes" optional>
-        <textarea
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          rows={3}
-          maxLength={500}
-          placeholder="Anything else worth remembering?"
-          className="w-full rounded-2xl bg-cream border border-bone px-4 py-3 text-body text-ink placeholder:text-stone resize-none focus:outline-none focus:ring-3 focus:ring-peach/30"
-        />
-      </LogRow>
+      <Link
+        href="/scan/diaper"
+        className="self-start inline-flex items-center gap-2 h-11 px-4 rounded-pill bg-cream border border-bone text-small font-medium text-ink shadow-[var(--shadow-soft)]"
+      >
+        <Camera className="size-4" aria-hidden />
+        Scan diaper instead
+        <ChevronRight className="size-3.5" aria-hidden />
+      </Link>
     </LogShell>
   );
 }

@@ -21,14 +21,14 @@ export default function NamePage() {
   const handleContinue = () => {
     if (!isValid) return;
     writeProfile({ name: trimmed });
-    router.push("/onboarding/feeding");
+    router.push("/onboarding/avatar");
   };
 
   return (
     <StepShell
       tone="sage"
-      characterVariant="bear"
-      characterBg="sage"
+      imageSrc="/images/onboarding-name.png"
+      imageAlt="Swaddled baby beside a name placard"
       title="What&rsquo;s their name?"
       subtitle="So I can call them by name when we chat."
       footer={
@@ -37,7 +37,7 @@ export default function NamePage() {
           disabled={!isValid}
           showArrow
           fullWidth
-          ariaLabel="Continue to feeding"
+          ariaLabel="Continue to avatar"
         >
           Continue
         </PrimaryCTA>

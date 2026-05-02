@@ -1,5 +1,12 @@
 "use client";
 
+// Email + OTP code sign-in. We call signInWithOtp without an
+// `emailRedirectTo` so Supabase sends the 6-digit token (rather than a
+// magic link). The Supabase email template at Auth → Email Templates →
+// Magic Link must use `{{ .Token }}` for this to land as a code.
+//
+// Email delivery routes through Resend via Supabase's custom SMTP — see
+// the docstring on /api/auth/callback/route.ts and the README OTP section.
 import { useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -19,12 +26,9 @@ export function SignInForm() {
     setLoading(true);
 
     const supabase = createSupabaseBrowserClient();
-    const redirectTo = new URL("/api/auth/callback", window.location.origin);
-    if (next) redirectTo.searchParams.set("next", next);
-
     const { error: signInError } = await supabase.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: redirectTo.toString() },
+      options: { shouldCreateUser: true },
     });
 
     setLoading(false);
@@ -32,7 +36,10 @@ export function SignInForm() {
       setError(signInError.message);
       return;
     }
-    router.push(`/verify?email=${encodeURIComponent(email)}`);
+
+    const params = new URLSearchParams({ email });
+    if (next) params.set("next", next);
+    router.push(`/verify?${params.toString()}`);
   }
 
   return (
@@ -62,8 +69,12 @@ export function SignInForm() {
         disabled={loading || !email}
         className="h-14 px-6 rounded-pill bg-peach text-ink font-medium hover:bg-peach/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
-        {loading ? "Sending…" : "Send magic link"}
+        {loading ? "Sending…" : "Send code"}
       </button>
+
+      <p className="text-micro uppercase tracking-wider text-stone text-center pt-2">
+        We&rsquo;ll email a 6-digit code. No password.
+      </p>
     </form>
   );
 }

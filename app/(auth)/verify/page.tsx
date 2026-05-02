@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { VerifyForm } from "./verify-form";
 
-export const metadata: Metadata = { title: "Check your email" };
+export const metadata: Metadata = { title: "Enter your code" };
 
 export default async function VerifyPage({
   searchParams,
 }: {
-  searchParams: Promise<{ email?: string }>;
+  searchParams: Promise<{ email?: string; next?: string }>;
 }) {
-  const { email } = await searchParams;
+  const { email, next } = await searchParams;
 
   return (
     <main className="container-app flex flex-1 flex-col justify-center gap-6 py-16">
@@ -16,26 +16,18 @@ export default async function VerifyPage({
         <span className="size-6 rounded-pill bg-peach" />
       </div>
       <div className="flex flex-col gap-3">
-        <h1 className="font-display text-h1 text-ink">Check your email.</h1>
+        <h1 className="font-display text-h1 text-ink">Enter your code.</h1>
         <p className="text-body text-stone">
-          We sent a sign-in link
+          We sent a 6-digit code
           {email ? (
             <>
               {" "}to <span className="text-ink font-medium">{email}</span>
             </>
           ) : null}
-          . Tap it to come back here.
-        </p>
-        <p className="text-small text-stone">
-          The link expires in 1 hour. Check spam if you don&apos;t see it.
+          . It expires in 10 minutes.
         </p>
       </div>
-      <Link
-        href="/signin"
-        className="text-small text-stone underline underline-offset-4 hover:text-ink self-start"
-      >
-        Use a different email
-      </Link>
+      <VerifyForm email={email ?? ""} next={next ?? ""} />
     </main>
   );
 }
