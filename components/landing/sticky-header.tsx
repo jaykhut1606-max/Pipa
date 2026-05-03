@@ -8,6 +8,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { motion, useScroll, useTransform } from "framer-motion";
+import { Wordmark } from "@/components/brand/wordmark";
 
 export function StickyHeader() {
   const { scrollY } = useScroll();
@@ -28,18 +29,32 @@ export function StickyHeader() {
         <Link
           href="/"
           aria-label="Pippa home"
-          className="flex items-center min-w-0 shrink"
+          className="flex items-center gap-2.5 min-w-0 shrink"
         >
-          {/* Brand lockup — character + "pippa" wordmark are baked into the
-              image, so we don't render a separate <Wordmark> beside it. */}
-          <Image
-            src="/images/pippa-logo.png"
-            alt="Pippa"
-            width={56}
-            height={56}
-            priority
-            className="size-14 object-contain mix-blend-multiply"
-          />
+          {/* iOS-app-icon squircle with the character mark inside.
+              Container provides peach-tinted depth (gradient + inset
+              shadow + outer drop shadow); the image fills it and uses
+              mix-blend-multiply so its cream pixels disappear into
+              the gradient. */}
+          <span
+            aria-hidden
+            className="relative grid place-items-center size-10 overflow-hidden shadow-[0_4px_10px_-2px_rgba(245,169,131,0.45),inset_0_1px_0_rgba(255,255,255,0.55),inset_0_-2px_4px_rgba(74,53,64,0.10)]"
+            style={{
+              borderRadius: "28%",
+              backgroundImage:
+                "linear-gradient(180deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 32%), linear-gradient(135deg, var(--color-peach-soft) 0%, var(--color-vivid-peach-soft) 100%)",
+            }}
+          >
+            <Image
+              src="/images/pippa-mark.png"
+              alt="Pippa"
+              width={40}
+              height={40}
+              priority
+              className="size-full object-cover mix-blend-multiply"
+            />
+          </span>
+          <Wordmark className="text-h3" />
         </Link>
         <Link
           href="/signin"
