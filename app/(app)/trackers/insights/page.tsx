@@ -20,6 +20,7 @@ import {
 import { NavBar } from "@/components/primitives/nav-bar";
 import { Character } from "@/components/primitives/character";
 import { PrimaryCTA } from "@/components/primitives/primary-cta";
+import { Skeleton } from "@/components/primitives/skeleton";
 import { StatusPill } from "@/components/primitives/status-pill";
 import { TrackerIcon } from "@/components/icons/tracker-icon";
 import { GranularityToggle } from "@/components/charts/granularity-toggle";
@@ -418,15 +419,15 @@ function SkeletonCard() {
   return (
     <div className="rounded-2xl bg-cream shadow-[var(--shadow-soft)] p-5 flex flex-col gap-3">
       <div className="flex items-center gap-3">
-        <div className="size-12 rounded-2xl bg-bone/70 motion-safe:animate-[pulseSoft_2.5s_ease-in-out_infinite]" />
+        <Skeleton shape="card" className="size-12" />
         <div className="flex-1 flex flex-col gap-2">
-          <div className="h-4 w-1/2 rounded-pill bg-bone/70 motion-safe:animate-[pulseSoft_2.5s_ease-in-out_infinite]" />
-          <div className="h-3 w-1/4 rounded-pill bg-bone/50 motion-safe:animate-[pulseSoft_2.5s_ease-in-out_infinite]" />
+          <Skeleton className="h-4 w-1/2" shape="pill" />
+          <Skeleton className="h-3 w-1/4" shape="pill" />
         </div>
       </div>
-      <div className="h-7 w-2/5 rounded-pill bg-bone/70 motion-safe:animate-[pulseSoft_2.5s_ease-in-out_infinite]" />
-      <div className="h-32 rounded-xl bg-bone/50 motion-safe:animate-[pulseSoft_2.5s_ease-in-out_infinite]" />
-      <div className="h-3 w-3/4 rounded-pill bg-bone/50 motion-safe:animate-[pulseSoft_2.5s_ease-in-out_infinite]" />
+      <Skeleton className="h-7 w-2/5" shape="pill" />
+      <Skeleton className="h-32 w-full" />
+      <Skeleton className="h-3 w-3/4" shape="pill" />
     </div>
   );
 }
