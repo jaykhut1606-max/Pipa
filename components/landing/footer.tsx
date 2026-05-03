@@ -1,8 +1,7 @@
 // Marketing footer. Three columns on sm+, stacked on mobile.
 // Includes the educational-not-medical disclaimer and minimal navigation.
 import Link from "next/link";
-import { Logo } from "@/components/brand/logo";
-import { Wordmark } from "@/components/brand/wordmark";
+import Image from "next/image";
 
 export function MarketingFooter() {
   const year = new Date().getFullYear();
@@ -10,9 +9,14 @@ export function MarketingFooter() {
     <footer className="bg-cream border-t border-bone/70">
       <div className="container-marketing py-10 flex flex-col gap-6 sm:flex-row sm:justify-between sm:items-start">
         <div className="flex flex-col gap-3 max-w-xs">
-          <Link href="/" aria-label="Pippa home" className="flex items-center gap-2.5">
-            <Logo size={28} />
-            <Wordmark className="text-h3" />
+          <Link href="/" aria-label="Pippa home" className="flex items-center">
+            <Image
+              src="/images/pippa-logo.png"
+              alt="Pippa"
+              width={48}
+              height={48}
+              className="size-12 object-contain"
+            />
           </Link>
           <p className="text-small text-stone leading-relaxed">
             Pippa is educational support, not medical diagnosis or treatment.

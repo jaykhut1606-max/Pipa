@@ -230,20 +230,48 @@ function Cry({ size, className }: IconProps) {
 }
 
 function Rash({ size, className }: IconProps) {
-  const s = size * 0.6;
+  // Magnifying glass over a skin-tone patch with rash spots inside the
+  // lens. Reads as "check the rash" instead of the prior heart-with-dots
+  // which got mistaken for a generic favorites icon.
+  const s = size * 0.62;
   return (
     <Tile size={size} className={className} bg="#F8D8DA">
       <svg viewBox="0 0 64 64" width={s} height={s} aria-hidden fill="none">
+        {/* Magnifier handle — drawn first so the lens sits on top. */}
         <path
-          d="M32 50s-16-9.5-16-21a9 9 0 0 1 16-5.7A9 9 0 0 1 48 29c0 11.5-16 21-16 21Z"
-          fill="#fff"
+          d="M40 40 L52 52"
+          stroke="#1F1B18"
+          strokeWidth="5"
+          strokeLinecap="round"
+        />
+        <path
+          d="M40 40 L52 52"
+          stroke="#E68E92"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+        />
+        {/* Lens — skin-tone fill so the spots inside read as on-skin. */}
+        <circle
+          cx="26"
+          cy="26"
+          r="16"
+          fill="#FCE5D5"
           stroke="#1F1B18"
           strokeWidth="2.5"
-          strokeLinejoin="round"
         />
-        <circle cx="26" cy="30" r="2" fill="#E68E92" />
-        <circle cx="34" cy="34" r="2" fill="#E68E92" />
-        <circle cx="30" cy="38" r="2" fill="#E68E92" />
+        {/* Rash spots inside the lens. */}
+        <circle cx="22" cy="22" r="2.2" fill="#E68E92" />
+        <circle cx="31" cy="21" r="1.8" fill="#E68E92" />
+        <circle cx="20" cy="30" r="1.6" fill="#E68E92" />
+        <circle cx="28" cy="31" r="2.4" fill="#E68E92" />
+        {/* Specular highlight on the lens for that inspect-y feel. */}
+        <path
+          d="M16 18a8 8 0 0 1 6-5"
+          stroke="#fff"
+          strokeWidth="2"
+          strokeLinecap="round"
+          fill="none"
+        />
       </svg>
     </Tile>
   );

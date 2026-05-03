@@ -6,9 +6,8 @@
 // boolean threshold). The "Sign in" link is offset from the wordmark with
 // gap-4 + shrink-0 + truncation so they never collide on iPhone SE (375px).
 import Link from "next/link";
+import Image from "next/image";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { Logo } from "@/components/brand/logo";
-import { Wordmark } from "@/components/brand/wordmark";
 
 export function StickyHeader() {
   const { scrollY } = useScroll();
@@ -25,14 +24,22 @@ export function StickyHeader() {
       style={{ background: bg, borderBottomColor: border }}
       className="sticky top-0 z-40 w-full border-b backdrop-blur-md motion-reduce:bg-cream/80"
     >
-      <div className="container-marketing flex items-center justify-between py-4 gap-4">
+      <div className="container-marketing flex items-center justify-between py-3 gap-4">
         <Link
           href="/"
           aria-label="Pippa home"
-          className="flex items-center gap-2.5 min-w-0 shrink"
+          className="flex items-center min-w-0 shrink"
         >
-          <Logo size={32} />
-          <Wordmark className="text-h3" />
+          {/* Brand lockup — character + "pippa" wordmark are baked into the
+              image, so we don't render a separate <Wordmark> beside it. */}
+          <Image
+            src="/images/pippa-logo.png"
+            alt="Pippa"
+            width={56}
+            height={56}
+            priority
+            className="size-14 object-contain"
+          />
         </Link>
         <Link
           href="/signin"
