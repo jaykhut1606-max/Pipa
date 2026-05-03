@@ -34,8 +34,9 @@ export function FeatureCard({ variant, title, body, delay = 0, className }: Prop
       viewport={{ once: true, amount: 0.4 }}
       transition={{ duration: 0.55, delay, ease: [0.16, 1, 0.3, 1] }}
       whileHover={{ y: -4 }}
+      whileTap={{ scale: 0.985, y: 0 }}
       className={cn(
-        "group rounded-xl bg-cream border border-bone/70 p-6 flex flex-col gap-4 shadow-[var(--shadow-soft)] hover:shadow-[var(--shadow-pop)] transition-shadow",
+        "group rounded-2xl bg-cream border border-bone/70 p-6 flex flex-col gap-4 shadow-[var(--shadow-soft)] hover:shadow-[var(--shadow-pop)] transition-shadow",
         className,
       )}
     >

@@ -34,7 +34,7 @@ export function PricingStrip() {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.3 }}
       transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-      className="rounded-xl bg-cream border border-bone p-6 sm:p-8 shadow-[var(--shadow-soft)] flex flex-col gap-6"
+      className="rounded-2xl bg-cream border border-bone p-6 sm:p-8 shadow-[var(--shadow-soft)] flex flex-col gap-6"
     >
       <div className="flex items-start justify-between gap-4">
         <div className="flex flex-col gap-1">

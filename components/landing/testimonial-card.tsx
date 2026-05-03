@@ -41,7 +41,7 @@ export function TestimonialCard({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.3 }}
       transition={{ duration: 0.55, delay, ease: [0.16, 1, 0.3, 1] }}
-      className="rounded-xl bg-cream border border-bone/70 p-6 flex flex-col gap-5 shadow-[var(--shadow-soft)]"
+      className="rounded-2xl bg-cream border border-bone/70 p-6 flex flex-col gap-5 shadow-[var(--shadow-soft)]"
     >
       <blockquote className="text-body text-ink leading-relaxed">
         <span aria-hidden className="font-display text-h2 text-peach leading-none">

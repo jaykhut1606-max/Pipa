@@ -219,7 +219,7 @@ export default function HomePage() {
             align="left"
           />
           <Reveal>
-            <div className="rounded-xl bg-cream border border-bone p-2 sm:p-4 shadow-[var(--shadow-soft)]">
+            <div className="rounded-2xl bg-cream border border-bone p-2 sm:p-4 shadow-[var(--shadow-soft)]">
               {FAQS.map((faq, i) => (
                 <FaqRow
                   key={faq.question}

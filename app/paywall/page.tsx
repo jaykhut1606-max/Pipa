@@ -85,7 +85,7 @@ export default function PaywallPage() {
               fill
               priority
               sizes="176px"
-              className="object-contain drop-shadow-[0_8px_24px_rgba(245,169,131,0.30)]"
+              className="object-contain [filter:var(--drop-shadow-mascot)]"
             />
           </div>
           <div className="absolute -top-2 right-[-8px]">

@@ -34,11 +34,29 @@
   --color-mint: #b8e2d4;
   --color-lavender: #d8c8e8;
 
-  /* Soft shadow stack used by character cards */
-  --shadow-soft: 0 1px 2px rgba(31, 27, 24, 0.04),
-    0 8px 24px rgba(31, 27, 24, 0.06);
-  --shadow-pop: 0 2px 4px rgba(31, 27, 24, 0.06),
-    0 16px 40px rgba(31, 27, 24, 0.08);
+  /* Layered shadow ladder — Apple-Health-style depth without WebGL.
+     Three stops per token: 1px hairline + ambient mid + diffuse far.
+     Uses plum-tinted RGB (74, 53, 64) so shadows feel warm against
+     the cream surface, not generic grey. */
+  --shadow-soft: 0 1px 2px rgba(74, 53, 64, 0.05),
+    0 4px 12px rgba(74, 53, 64, 0.06),
+    0 24px 48px -16px rgba(74, 53, 64, 0.08);
+  --shadow-pop: 0 1px 2px rgba(74, 53, 64, 0.06),
+    0 8px 20px rgba(74, 53, 64, 0.10),
+    0 32px 56px -20px rgba(74, 53, 64, 0.14);
+  /* Inner top-edge highlight — applied as a background-image overlay
+     on glass/card surfaces to give them a "lit from above" 3D feel. */
+  --inset-highlight: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.55) 0%,
+    rgba(255, 255, 255, 0) 14%
+  );
+  /* Warm peach drop-shadow used by floating mascot illustrations
+     (welcome, chat empty state, paywall hero). Tokenized so a brand
+     color tweak propagates instead of leaving 4 raw RGBA values. */
+  --drop-shadow-mascot: drop-shadow(
+    0 6px 18px rgba(245, 169, 131, 0.32)
+  );
 
   /* Animation: listening pulse for cry capture */
   --animate-listen-pulse: listenPulse 2.2s ease-out infinite;
@@ -152,6 +170,34 @@
     100% {
       box-shadow: 0 0 0 0 rgba(245, 169, 131, 0);
     }
+  }
+  /* Branded loading shimmer — used by skeleton placeholders so they
+     feel native to Pippa instead of the generic gray pulse. */
+  --animate-shimmer: shimmer 1.6s ease-in-out infinite;
+  @keyframes shimmer {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
+  }
+}
+
+/* Type rhythm — single biggest "premium" tell. Tighten Fraunces
+   headline tracking and switch on its stylistic sets (ss01, ss02)
+   for the curlier display alternates. Inter body gets a hair of
+   negative tracking to read like a brand sans, not the default. */
+@layer base {
+  h1,
+  h2,
+  h3,
+  .font-display {
+    letter-spacing: -0.02em;
+    font-feature-settings: "ss01", "ss02";
+  }
+  body {
+    letter-spacing: -0.005em;
   }
 }
 

@@ -83,7 +83,7 @@ export function StepShell({
             alt={imageAlt}
             fill
             sizes={`${imageSize}px`}
-            className="object-contain drop-shadow-[0_6px_18px_rgba(245,169,131,0.30)]"
+            className="object-contain [filter:var(--drop-shadow-mascot)]"
             priority
           />
         </motion.div>
