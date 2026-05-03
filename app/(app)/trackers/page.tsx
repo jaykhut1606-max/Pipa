@@ -20,6 +20,7 @@ import {
 } from "@/components/trackers/tracker-tabs";
 import { VoiceEntry } from "@/components/trackers/voice-entry";
 import { VoiceTips } from "@/components/trackers/voice-tips";
+import { DailyStackedBars } from "@/components/trackers/daily-stacked-bars";
 import {
   eventOneLiner,
   formatDuration,
@@ -27,8 +28,12 @@ import {
   startOfDay,
 } from "@/components/trackers/event-format";
 import { readProfile } from "@/components/onboarding/profile-store";
+import { cacheGet, cacheSet } from "@/lib/storage/cache";
 import type { TrackerEvent, TrackerEventType } from "@/lib/types";
 import { cn } from "@/lib/utils";
+
+const EVENTS_CACHE_KEY = "trackers.events";
+const EVENTS_CACHE_MAX_AGE_MS = 60 * 60 * 1000; // 1h — stale paint, fresh on the network
 
 const EASE_OUT_EXPO = [0.16, 1, 0.3, 1] as const;
 
@@ -91,12 +96,8 @@ const CARDS: CardSpec[] = [
   },
 ];
 
-const TYPE_BLOCK_COLOR: Record<TrackerEventType, string> = {
-  sleep: "bg-amber",
-  diaper: "bg-clay",
-  feed: "bg-soft-blue",
-  note: "bg-sage",
-};
+// (TYPE_BLOCK_COLOR was used by the old hour×day heatmap; the new
+// DailyStackedBars component owns its own palette.)
 
 const EVENT_TITLE: Record<TrackerEventType, string> = {
   sleep: "Sleeping",
@@ -127,7 +128,12 @@ function TrackersHubWithSearch() {
 function TrackersHubInner({ loggedKey }: { loggedKey: string }) {
   const [tab, setTab] = useState<TrackerTab>("track");
   const [babyName, setBabyName] = useState<string | null>(null);
-  const [events, setEvents] = useState<TrackerEvent[] | null>(null);
+  // Instant-paint from localStorage so the parent sees their last-known
+  // events the moment the page mounts. The fetch a few ms later swaps
+  // in the fresh data — eliminates the "blank skeleton" flash.
+  const [events, setEvents] = useState<TrackerEvent[] | null>(() =>
+    cacheGet<TrackerEvent[]>(EVENTS_CACHE_KEY, EVENTS_CACHE_MAX_AGE_MS),
+  );
   // The id of the most-recently-saved event, used to flash a glow ring
   // on the corresponding row in the Details tab so the parent has zero
   // ambiguity about what just landed. Cleared after the highlight runs.
@@ -152,8 +158,10 @@ function TrackersHubInner({ loggedKey }: { loggedKey: string }) {
         { cache: "no-store" },
       );
       const data = (await res.json()) as { events: TrackerEvent[] };
-      setEvents(data.events ?? []);
-      return data.events ?? [];
+      const next = data.events ?? [];
+      setEvents(next);
+      cacheSet(EVENTS_CACHE_KEY, next);
+      return next;
     } catch {
       setEvents([]);
       return [];
@@ -317,15 +325,13 @@ function SummaryView({ events }: { events: TrackerEvent[] | null }) {
     return e;
   }, [weekStart]);
 
-  const filtered = useMemo(() => {
+  const inWindow = useMemo(() => {
     if (!events) return null;
     return events.filter((e) => {
       const t = new Date(e.occurredAt);
-      if (t < weekStart || t >= weekEnd) return false;
-      if (filter === "all") return true;
-      return e.eventType === filter;
+      return t >= weekStart && t < weekEnd;
     });
-  }, [events, filter, weekStart, weekEnd]);
+  }, [events, weekStart, weekEnd]);
 
   return (
     <div className="flex flex-col gap-5">
@@ -384,7 +390,11 @@ function SummaryView({ events }: { events: TrackerEvent[] | null }) {
             <ChevronRight className="size-4" aria-hidden />
           </button>
         </header>
-        <Heatmap weekStart={weekStart} events={filtered} />
+        <DailyStackedBars
+          weekStart={weekStart}
+          events={inWindow}
+          filter={filter}
+        />
       </section>
 
       <Link
@@ -397,104 +407,8 @@ function SummaryView({ events }: { events: TrackerEvent[] | null }) {
   );
 }
 
-const HOUR_ROWS = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22];
-const DAY_SHORT = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-
-function Heatmap({
-  weekStart,
-  events,
-}: {
-  weekStart: Date;
-  events: TrackerEvent[] | null;
-}) {
-  const cells = useMemo(() => {
-    const out = new Map<string, TrackerEventType>();
-    for (const e of events ?? []) {
-      const t = new Date(e.occurredAt);
-      const dayIndex = Math.floor(
-        (startOfDay(t).getTime() - weekStart.getTime()) / 86_400_000
-      );
-      if (dayIndex < 0 || dayIndex > 6) continue;
-      const rowIndex = Math.floor(t.getHours() / 2);
-      out.set(`${rowIndex}:${dayIndex}`, e.eventType);
-    }
-    return out;
-  }, [events, weekStart]);
-
-  const today = startOfDay();
-  const dates = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(weekStart);
-    d.setDate(weekStart.getDate() + i);
-    return d;
-  });
-
-  return (
-    <div className="grid grid-cols-[44px_1fr] gap-x-2">
-      <ul className="flex flex-col">
-        {HOUR_ROWS.map((h) => (
-          <li
-            key={h}
-            className="h-7 text-micro tracking-wider text-stone leading-none flex items-center"
-          >
-            {formatHour(h)}
-          </li>
-        ))}
-        <li className="h-7 text-micro tracking-wider text-stone leading-none flex items-center">
-          12 AM
-        </li>
-      </ul>
-      <div>
-        <div className="grid grid-cols-7 gap-px bg-bone/40 rounded-md overflow-hidden">
-          {Array.from({ length: 7 * 12 }, (_, i) => {
-            const rowIndex = Math.floor(i / 7);
-            const dayIndex = i % 7;
-            const type = cells.get(`${rowIndex}:${dayIndex}`);
-            return (
-              <span
-                key={i}
-                className={cn("h-7 bg-cream", type && TYPE_BLOCK_COLOR[type])}
-                aria-hidden
-              />
-            );
-          })}
-        </div>
-        <ul className="grid grid-cols-7 mt-2">
-          {dates.map((d, i) => {
-            const isToday =
-              startOfDay(d).getTime() === today.getTime();
-            return (
-              <li key={i} className="text-center">
-                <p
-                  className={cn(
-                    "text-micro tracking-wider",
-                    isToday ? "text-plum font-medium" : "text-stone"
-                  )}
-                >
-                  {DAY_SHORT[i]}
-                </p>
-                <p
-                  className={cn(
-                    "text-small",
-                    isToday ? "text-plum font-medium" : "text-ink"
-                  )}
-                >
-                  {d.getDate()}
-                </p>
-              </li>
-            );
-          })}
-        </ul>
-      </div>
-    </div>
-  );
-}
-
-function formatHour(h: number): string {
-  if (h === 0) return "12 AM";
-  if (h === 12) return "12 PM";
-  if (h < 12) return `${h} AM`;
-  return `${h - 12} PM`;
-}
+// Heatmap (hour×day) was replaced by DailyStackedBars — denser display
+// turned out to be harder to read at a glance than per-day stacks.
 
 function formatRange(start: Date, endExclusive: Date): string {
   const last = new Date(endExclusive.getTime() - 86_400_000);

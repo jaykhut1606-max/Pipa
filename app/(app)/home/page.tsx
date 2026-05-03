@@ -22,7 +22,15 @@ import {
 import type { TrackerEvent } from "@/lib/types";
 import { TimelineToday } from "@/components/dashboard/timeline-today";
 import { TrackerIcon } from "@/components/icons/tracker-icon";
+import { cacheGet, cacheSet } from "@/lib/storage/cache";
 import { readProfile } from "@/components/onboarding/profile-store";
+
+// Same key the trackers page uses — both pages query overlapping
+// windows of the same /api/tracker/event endpoint, so they can
+// share the localStorage cache. /home pulls 7d, /trackers pulls
+// 14d; the hydration paint just shows whatever's there last.
+const HOME_EVENTS_CACHE_KEY = "trackers.events";
+const HOME_EVENTS_CACHE_MAX_AGE_MS = 60 * 60 * 1000; // 1h
 import {
   DEFAULT_AVATAR,
   avatarAlt,
@@ -195,8 +203,16 @@ export default function HomePage() {
   const [name, setName] = useState<string | null>(null);
   const [weeks, setWeeks] = useState<number | null>(null);
   const [avatar, setAvatar] = useState<AvatarSelection>(DEFAULT_AVATAR);
-  const [insights, setInsights] = useState<Insights | null>(null);
-  const [events, setEvents] = useState<TrackerEvent[] | null>(null);
+  // Instant paint from localStorage so the dashboard doesn't flash
+  // empty stat tiles + an empty timeline before the first fetch lands.
+  const cachedEvents = cacheGet<TrackerEvent[]>(
+    HOME_EVENTS_CACHE_KEY,
+    HOME_EVENTS_CACHE_MAX_AGE_MS,
+  );
+  const [insights, setInsights] = useState<Insights | null>(
+    cachedEvents ? computeInsights(cachedEvents) : null,
+  );
+  const [events, setEvents] = useState<TrackerEvent[] | null>(cachedEvents);
 
   // First-launch fresh start: existing demo users may have prefilled rows
   // from when /trackers auto-seeded. Wipe once per browser for this
@@ -236,6 +252,7 @@ export default function HomePage() {
           const list = d.events ?? [];
           setEvents(list);
           setInsights(computeInsights(list));
+          cacheSet(HOME_EVENTS_CACHE_KEY, list);
         })
         .catch(() => {
           setEvents([]);
