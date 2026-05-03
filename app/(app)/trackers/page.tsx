@@ -4,8 +4,10 @@
 //   Track   — quick-pick rows (Sleep/Diaper/Feeding) + Voice Entry.
 //   Summary — week heatmap (hours × days) with All/Sleep/Diaper/Feed chips.
 //   Details — today/week/month stat cards + entry list.
-// On first mount we GET /api/tracker/event?limit=1 and, if empty,
-// POST /api/tracker/seed?babyName=… so the demo is alive.
+//
+// No auto-seeding: every parent starts at zero. Empty timeline is the
+// honest, encouraging state — it gets populated as they log entries
+// (manually via /trackers/{type}/log or by voice via the mic card).
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
@@ -131,31 +133,7 @@ export default function TrackersHubPage() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      try {
-        const probe = await fetch("/api/tracker/event?limit=1");
-        const probeData = (await probe.json()) as { events: TrackerEvent[] };
-        if (cancelled) return;
-        // Only seed demo events for anonymous visitors (pre-onboarding).
-        // Once a parent has onboarded, their timeline starts empty and grows
-        // from real entries they log themselves.
-        const isOnboarded =
-          typeof window !== "undefined"
-            ? Boolean(readProfile().onboardedAt)
-            : false;
-        if (!isOnboarded && (probeData.events ?? []).length === 0) {
-          const seedName =
-            (typeof window !== "undefined"
-              ? readProfile().name
-              : undefined) || "Baby";
-          await fetch(
-            `/api/tracker/seed?babyName=${encodeURIComponent(seedName)}`,
-            { method: "POST" }
-          );
-        }
-        if (!cancelled) await fetchAll();
-      } catch {
-        if (!cancelled) setEvents([]);
-      }
+      if (!cancelled) await fetchAll();
     })();
     return () => {
       cancelled = true;

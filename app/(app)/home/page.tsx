@@ -5,8 +5,9 @@
 // hub (/trackers) is reached via the Add and Tracker history links.
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { motion, type Variants } from "framer-motion";
 import {
   ChevronRight,
   ClipboardList,
@@ -18,6 +19,7 @@ import {
   Trophy,
 } from "lucide-react";
 import type { TrackerEvent } from "@/lib/types";
+import { TimelineToday } from "@/components/dashboard/timeline-today";
 import { TrackerIcon } from "@/components/icons/tracker-icon";
 import { readProfile } from "@/components/onboarding/profile-store";
 import {
@@ -29,6 +31,20 @@ import {
   type AvatarSelection,
 } from "@/components/onboarding/avatar";
 import { cn } from "@/lib/utils";
+
+// Bumped whenever the dashboard wants to wipe stale demo rows for
+// existing visitors. Stored in localStorage so each browser only fires
+// the wipe once for a given version.
+const FRESH_START_KEY = "pippa.dashboard.freshStart.v2";
+
+const SECTION_FADE: Variants = {
+  hidden: { opacity: 0, y: 16 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] },
+  },
+};
 
 function InsightStat({
   variant,
@@ -61,6 +77,52 @@ function InsightStat({
       </span>
     </li>
   );
+}
+
+// Today-only tile used in the dashboard top row. Larger value, softer
+// background — sets up the dashboard glance before the Cry/Tracker cards.
+function TodayTile({
+  variant,
+  label,
+  value,
+}: {
+  variant: "sleep" | "feed" | "diaper";
+  label: string;
+  value: string;
+}) {
+  const bg =
+    variant === "sleep"
+      ? "bg-amber-soft"
+      : variant === "feed"
+        ? "bg-soft-blue-soft"
+        : "bg-clay-soft";
+  return (
+    <div
+      className={cn(
+        "relative rounded-2xl p-4 flex flex-col items-start gap-2 overflow-hidden shadow-[var(--shadow-soft)]",
+        bg
+      )}
+    >
+      <TrackerIcon variant={variant} size={36} />
+      <div className="flex flex-col">
+        <span className="font-display text-h2 text-ink leading-none">
+          {value}
+        </span>
+        <span className="text-micro uppercase tracking-wider text-stone mt-1">
+          {label}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function formatSleep(min: number): string {
+  if (min <= 0) return "0h";
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  if (h === 0) return `${m}m`;
+  if (m === 0) return `${h}h`;
+  return `${h}h ${m}m`;
 }
 
 function weeksSince(iso?: string): number | null {
@@ -133,6 +195,28 @@ export default function HomePage() {
   const [weeks, setWeeks] = useState<number | null>(null);
   const [avatar, setAvatar] = useState<AvatarSelection>(DEFAULT_AVATAR);
   const [insights, setInsights] = useState<Insights | null>(null);
+  const [events, setEvents] = useState<TrackerEvent[] | null>(null);
+
+  // First-launch fresh start: existing demo users may have prefilled rows
+  // from when /trackers auto-seeded. Wipe once per browser for this
+  // dashboard version, then mark the flag so we never wipe again.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const wiped = window.localStorage.getItem(FRESH_START_KEY);
+    if (wiped) return;
+    (async () => {
+      try {
+        await fetch("/api/demo/reset", { method: "POST" });
+      } catch {
+        // best-effort
+      }
+      try {
+        window.localStorage.setItem(FRESH_START_KEY, "1");
+      } catch {
+        // private mode — drop silently
+      }
+    })();
+  }, []);
 
   useEffect(() => {
     const p = readProfile();
@@ -143,16 +227,39 @@ export default function HomePage() {
     const since = new Date(Date.now() - 7 * 86_400_000).toISOString();
     fetch(`/api/tracker/event?since=${encodeURIComponent(since)}&limit=500`)
       .then((r) => r.json() as Promise<{ events: TrackerEvent[] }>)
-      .then((d) => setInsights(computeInsights(d.events ?? [])))
-      .catch(() =>
+      .then((d) => {
+        const list = d.events ?? [];
+        setEvents(list);
+        setInsights(computeInsights(list));
+      })
+      .catch(() => {
+        setEvents([]);
         setInsights({
           sleepHrPerDay: 0,
           feedsPerDay: 0,
           diapersPerDay: 0,
           hasData: false,
-        })
-      );
+        });
+      });
   }, []);
+
+  // Today's stats — separate from the 7-day insights so the user gets
+  // an at-a-glance read of *now*.
+  const todayStats = useMemo(() => {
+    if (!events) return null;
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+    let feeds = 0;
+    let diapers = 0;
+    let sleepMin = 0;
+    for (const e of events) {
+      if (new Date(e.occurredAt) < start) continue;
+      if (e.eventType === "feed") feeds += 1;
+      else if (e.eventType === "diaper") diapers += 1;
+      else if (e.eventType === "sleep") sleepMin += e.durationMinutes ?? 0;
+    }
+    return { feeds, diapers, sleepMin };
+  }, [events]);
 
   return (
     <main className="flex-1 bg-cream pb-40">
@@ -201,6 +308,43 @@ export default function HomePage() {
       </section>
 
       <div className="container-app -mt-4 flex flex-col gap-4">
+        {/* TODAY'S STATS — at-a-glance counters with scroll-fade. Mirrors
+            the reference dashboard's top row (Feeds / Sleep / Diaper). */}
+        <motion.section
+          variants={SECTION_FADE}
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, amount: 0.3 }}
+          className="grid grid-cols-3 gap-3"
+        >
+          <TodayTile
+            variant="feed"
+            label="Feeds"
+            value={todayStats ? String(todayStats.feeds) : "—"}
+          />
+          <TodayTile
+            variant="sleep"
+            label="Sleep"
+            value={todayStats ? formatSleep(todayStats.sleepMin) : "—"}
+          />
+          <TodayTile
+            variant="diaper"
+            label="Diapers"
+            value={todayStats ? String(todayStats.diapers) : "—"}
+          />
+        </motion.section>
+
+        {/* TODAY'S TIMELINE — color-coded dots/bars on a 24h scale.
+            Empty until the parent logs something. */}
+        <motion.div
+          variants={SECTION_FADE}
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, amount: 0.2 }}
+        >
+          <TimelineToday events={events} babyName={name} />
+        </motion.div>
+
         <article className="rounded-2xl bg-cream p-5 shadow-[var(--shadow-soft)]">
           <h2 className="font-display text-h2 text-plum">Cry translation</h2>
           <ul className="grid grid-cols-4 mt-4 mb-3" aria-hidden>
