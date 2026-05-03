@@ -16,6 +16,7 @@ import {
   ClipboardList,
   Eye,
   Lightbulb,
+  Mail,
   MessageCircle,
   Moon,
   RefreshCw,
@@ -506,6 +507,38 @@ export default function TodayPage() {
               </span>
             </div>
             <ArrowRight className="size-4 text-stone shrink-0" aria-hidden />
+          </Link>
+        </motion.div>
+
+        {/* PIPPA LETTERS — the artifact-builder. Clearly labeled as the
+            keepsake side of the app so the parent knows logging
+            compounds into something they receive back. */}
+        <motion.div
+          variants={FADE}
+          initial={reduce ? false : "hidden"}
+          animate="show"
+        >
+          <Link
+            href="/journal"
+            className="block rounded-2xl bg-rose-soft p-5 hover:shadow-[var(--shadow-soft)] transition-shadow"
+          >
+            <div className="flex items-center gap-4">
+              <span
+                aria-hidden
+                className="size-12 shrink-0 rounded-2xl bg-cream grid place-items-center"
+              >
+                <Mail className="size-6 text-rose" strokeWidth={2} />
+              </span>
+              <div className="flex-1 min-w-0 flex flex-col gap-0.5">
+                <p className="font-display text-h3 text-ink">
+                  Pippa wrote you a letter
+                </p>
+                <p className="text-small text-clay">
+                  Read this week&rsquo;s memory letter
+                </p>
+              </div>
+              <ArrowRight className="size-5 text-clay shrink-0" aria-hidden />
+            </div>
           </Link>
         </motion.div>
 

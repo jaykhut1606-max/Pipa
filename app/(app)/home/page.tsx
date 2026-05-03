@@ -12,6 +12,7 @@ import {
   ChevronRight,
   ClipboardList,
   FileText,
+  Mail,
   Mic,
   Moon,
   Plus,
@@ -488,6 +489,31 @@ export default function HomePage() {
             </Link>
           </div>
         </article>
+
+        {/* PIPPA LETTERS — the killer feature CTA. Sits between the
+            insights hero and the routine cards so it reads as the
+            promise of "your logging becomes a memory book." */}
+        <Link
+          href="/journal"
+          className="group rounded-2xl bg-cream shadow-[var(--shadow-soft)] p-5 flex items-center gap-4 hover:shadow-[var(--shadow-pop)] transition-shadow"
+        >
+          <span
+            aria-hidden
+            className="size-12 shrink-0 rounded-2xl bg-rose-soft text-rose grid place-items-center"
+          >
+            <Mail className="size-6" strokeWidth={2} />
+          </span>
+          <div className="flex-1 min-w-0 flex flex-col gap-0.5">
+            <p className="font-display text-h2 text-plum">Pippa Letters</p>
+            <p className="text-small text-stone">
+              Weekly memory letters from your logs &mdash; a baby book that writes itself.
+            </p>
+          </div>
+          <ChevronRight
+            className="size-5 text-stone shrink-0 transition-transform group-hover:translate-x-0.5"
+            aria-hidden
+          />
+        </Link>
 
         <Link
           href="/paywall"
