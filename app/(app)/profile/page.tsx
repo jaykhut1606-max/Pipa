@@ -350,7 +350,7 @@ function AvatarPicker({
         initial={{ y: 24, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 24, opacity: 0 }}
-        transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+        transition={{ type: "spring", stiffness: 320, damping: 32, mass: 0.8 }}
         className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-50 rounded-2xl bg-vivid-peach-soft text-ink p-5 flex flex-col gap-5 max-w-md mx-auto shadow-[var(--shadow-pop)]"
       >
         <p className="font-display text-h3 self-center bg-plum text-cream rounded-pill px-4 py-1.5 text-center">

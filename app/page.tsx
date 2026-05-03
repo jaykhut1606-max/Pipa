@@ -144,7 +144,7 @@ export default function HomePage() {
       <StickyHeader />
 
       {/* Hero band — peach gradient extends just under the fold */}
-      <div className="relative bg-gradient-to-br from-vivid-peach-soft via-peach-soft to-cream">
+      <div className="noise-overlay relative bg-gradient-to-br from-vivid-peach-soft via-peach-soft to-cream">
         <HeroStage />
       </div>
 

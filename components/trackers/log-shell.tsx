@@ -146,7 +146,7 @@ function NoteSheet({
         initial={{ y: "100%" }}
         animate={{ y: 0 }}
         exit={{ y: "100%" }}
-        transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+        transition={{ type: "spring", stiffness: 320, damping: 32, mass: 0.8 }}
         className="fixed bottom-0 inset-x-0 z-50 bg-plum text-cream rounded-t-3xl px-6 pt-3 pb-10"
       >
         <div className="mx-auto h-1 w-10 rounded-pill bg-cream/40" />

@@ -317,7 +317,7 @@ export default function HomePage() {
 
   return (
     <main className="flex-1 bg-cream pb-40">
-      <section className="relative bg-gradient-to-b from-vivid-peach-soft via-peach-soft to-cream pt-10 pb-8">
+      <section className="noise-overlay relative bg-gradient-to-b from-vivid-peach-soft via-peach-soft to-cream pt-10 pb-8">
         <div className="container-app flex items-start gap-4">
           <Link
             href="/profile"

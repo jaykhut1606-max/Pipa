@@ -18,6 +18,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { NavBar } from "@/components/primitives/nav-bar";
+import { Skeleton } from "@/components/primitives/skeleton";
 import { readProfile } from "@/components/onboarding/profile-store";
 import { cn } from "@/lib/utils";
 
@@ -201,9 +202,19 @@ export default function JournalPage() {
         )}
 
         {letters === null && (
-          <p className="text-small text-stone text-center py-12">
-            Loading your letters…
-          </p>
+          <ul className="flex flex-col gap-4" aria-hidden>
+            {Array.from({ length: 2 }).map((_, i) => (
+              <li
+                key={i}
+                className="rounded-2xl bg-cream shadow-[var(--shadow-soft)] p-5 flex flex-col gap-3"
+              >
+                <Skeleton className="h-3 w-24" shape="pill" />
+                <Skeleton className="h-6 w-3/4" />
+                <Skeleton className="h-3 w-full" />
+                <Skeleton className="h-3 w-5/6" />
+              </li>
+            ))}
+          </ul>
         )}
 
         {letters !== null && letters.length === 0 && !generating && (

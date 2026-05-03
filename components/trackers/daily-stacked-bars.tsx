@@ -6,6 +6,7 @@
 // to phone widths, and animates in on render.
 import { useMemo } from "react";
 import { motion, useReducedMotion, type Variants } from "framer-motion";
+import { Skeleton } from "@/components/primitives/skeleton";
 import { startOfDay } from "@/components/trackers/event-format";
 import type { TrackerEvent } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -129,7 +130,17 @@ export function DailyStackedBars({ weekStart, events, filter }: Props) {
       </ul>
 
       {cols === null ? (
-        <p className="text-small text-stone py-12 text-center">Loading…</p>
+        <div
+          aria-hidden
+          className="grid grid-cols-7 gap-1.5 items-end pt-2"
+        >
+          {Array.from({ length: 7 }).map((_, i) => (
+            <div key={i} className="flex flex-col items-center gap-2">
+              <Skeleton className="w-full h-32" />
+              <Skeleton className="h-2 w-6" />
+            </div>
+          ))}
+        </div>
       ) : (
         <motion.div
           variants={containerV}

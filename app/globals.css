@@ -201,6 +201,24 @@
   }
 }
 
+/* Sectional micro-noise — kills banding on peach/cream gradients and
+   gives big surfaces a subtle film-grain feel (Calm / Headspace
+   pattern). 2KB SVG via a public/noise.svg URL. Apply with
+   `noise-overlay` class to any container that wants it. */
+.noise-overlay {
+  position: relative;
+}
+.noise-overlay::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: url("/noise.svg");
+  background-size: 160px 160px;
+  opacity: 0.04;
+  mix-blend-mode: multiply;
+}
+
 /* shadcn/ui semantic tokens, remapped to the Pippa palette.
    We force light mode in v1 — `.dark` mirrors `:root`. */
 @theme inline {

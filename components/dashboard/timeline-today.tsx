@@ -12,6 +12,7 @@
 // can come alive — explicit per the "no prefilled data" rule.
 import { useMemo, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
+import { Skeleton } from "@/components/primitives/skeleton";
 import { cn } from "@/lib/utils";
 import type { TrackerEvent, TrackerEventType } from "@/lib/types";
 
@@ -71,7 +72,16 @@ export function TimelineToday({ events, babyName }: Props) {
       <Legend />
 
       {todayEvents === null ? (
-        <p className="text-small text-stone py-6 text-center">Loading…</p>
+        <div className="py-2 px-1">
+          <Skeleton shape="pill" className="h-1 w-full" />
+          <div className="mt-3 flex justify-between">
+            <Skeleton className="h-2 w-2" shape="circle" />
+            <Skeleton className="h-2 w-2" shape="circle" />
+            <Skeleton className="h-2 w-2" shape="circle" />
+            <Skeleton className="h-2 w-2" shape="circle" />
+            <Skeleton className="h-2 w-2" shape="circle" />
+          </div>
+        </div>
       ) : todayEvents.length === 0 ? (
         <EmptyTimeline babyName={babyName} />
       ) : (

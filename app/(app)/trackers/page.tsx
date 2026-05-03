@@ -21,6 +21,7 @@ import {
 import { VoiceEntry } from "@/components/trackers/voice-entry";
 import { VoiceTips } from "@/components/trackers/voice-tips";
 import { DailyStackedBars } from "@/components/trackers/daily-stacked-bars";
+import { Skeleton } from "@/components/primitives/skeleton";
 import {
   eventOneLiner,
   formatDuration,
@@ -529,7 +530,19 @@ function DetailsView({
 
       <ul className="flex flex-col gap-3">
         {events === null && (
-          <li className="text-small text-stone text-center py-6">Loading…</li>
+          <>
+            {Array.from({ length: 3 }).map((_, i) => (
+              <li key={i}>
+                <div className="rounded-2xl bg-cream shadow-[var(--shadow-soft)] p-4 flex items-center gap-4">
+                  <Skeleton shape="card" className="size-12" />
+                  <div className="flex-1 flex flex-col gap-2">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-3 w-40" />
+                  </div>
+                </div>
+              </li>
+            ))}
+          </>
         )}
         {events !== null && sortedEntries.length === 0 && (
           <li className="text-small text-stone text-center py-6">
