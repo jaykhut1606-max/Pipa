@@ -70,41 +70,73 @@ const PAYLOAD = z.discriminatedUnion("type", [SLEEP, DIAPER, FEED, NOTE]);
 
 // --- Prompts ----------------------------------------------------------------
 
-const SYSTEM_PROMPT = `You parse short voice notes from sleep-deprived parents into one TrackerEvent. The transcription may be terse, contain typos, or use approximate times. Output strict JSON. If unsure of the type, output {"type":"note","data":{"text":"<verbatim>"}}.
+const SYSTEM_PROMPT = `You parse short voice notes from sleep-deprived parents into one structured TrackerEvent. The transcription may be terse, contain typos, or use approximate times.
 
-Map relative times like "just now", "right now" to occurredOffsetMin=0. "30 minutes ago" → 30. "an hour ago" → 60. "earlier this morning" → 120. The API will compute absolute occurredAt.
-Map durations: "an hour and a half" → durationMinutes=90. "20 minutes" → 20. "two hours" → 120.
+CLASSIFY AGGRESSIVELY into sleep / feed / diaper. Only fall back to "note" when the transcription clearly contains no logging intent (an observation about mood with no event). A sentence that mentions sleeping, napping, feeding, nursing, bottle, breast, diaper, wet, dirty, poop, or pee is NEVER a "note" — it's the matching event type.
 
-Strict output shape:
+You receive the parent's current LOCAL time as context. Use it to resolve absolute times like "at 2pm".
+
+TIME RESOLUTION:
+- Relative: "just now"/"right now" → offset=0. "30 minutes ago" → 30. "an hour ago" → 60. "earlier this morning" → ~180.
+- Absolute: convert to "minutes ago" using the current local time.
+  - If current time is "16:30" (4:30pm) and the parent says "at 2pm" → that was 150 min ago.
+  - If current time is "08:00" and the parent says "at 6am" → 120 min ago.
+- Range "X to Y" or "X until Y" or "from X till Y" → start = X, duration = Y - X (in minutes).
+  - "slept at 2pm woke up 3pm" with current time 4pm → occurredOffsetMin=120, durationMinutes=60.
+  - "nursed from 9 to 9:15" → method=breast, breast minutes split, durationMinutes=15.
+- Duration phrases: "an hour and a half" → 90. "20 minutes" → 20. "two hours" → 120.
+
+OUTPUT — strict JSON:
 {
   "type": "sleep" | "diaper" | "feed" | "note",
-  "data": { ... }, // payload data fields ONLY for that type
-  "occurredOffsetMin": number, // minutes ago, default 0
-  "durationMinutes": number?, // sleep duration / breast minutes — omit if unknown
-  "confidence": number, // 0..1
-  "summary": "human-readable one-liner like 'Slept 1h 30m'"
+  "data": { ... },              // ONLY the keys defined for that type
+  "occurredOffsetMin": number,   // minutes ago that the event STARTED
+  "durationMinutes": number?,    // omit unless explicitly known/inferred
+  "confidence": number,          // 0..1
+  "summary": "human-readable one-liner like 'Slept 1h 0m, 2:00–3:00 PM'"
 }
 
-Type-specific data fields (use ONLY these keys):
+DATA FIELDS (use ONLY these keys per type):
 - sleep:  { location?: "crib"|"bassinet"|"stroller"|"contact"|"car"|"other", quality?: "settled"|"restless"|"broken", notes?: string }
 - diaper: { kind: "wet"|"dirty"|"mixed", consistency?: "watery"|"loose"|"soft"|"formed"|"hard"|"pellets", color?: string, notes?: string }
 - feed:   { method: "breast"|"bottle"|"solids", breastSide?: "left"|"right"|"both", breastLeftMinutes?: number, breastRightMinutes?: number, bottleMl?: number, bottleContents?: "breast_milk"|"formula"|"mixed", solidsItems?: string[], notes?: string }
 - note:   { text: string, mood?: "good"|"okay"|"rough" }
 
-Examples:
-"She slept for an hour and a half just now"
+DIAPER vocabulary mapping:
+- "pee", "wet", "just wet" → kind=wet
+- "poop", "poopy", "dirty", "number two", "BM" → kind=dirty
+- "both", "wet and dirty", "pee and poop" → kind=mixed
+
+EXAMPLES — note how each one classifies, never falls back to note:
+
+(1) "She slept for an hour and a half just now"
 => {"type":"sleep","data":{"quality":"settled"},"occurredOffsetMin":90,"durationMinutes":90,"confidence":0.9,"summary":"Slept 1h 30m"}
 
-"Wet diaper, like 30 minutes ago"
-=> {"type":"diaper","data":{"kind":"wet"},"occurredOffsetMin":30,"confidence":0.95,"summary":"Wet diaper"}
+(2) "Baby slept at 2pm woke up 3pm" — current local time 4:00 PM
+=> {"type":"sleep","data":{"quality":"settled"},"occurredOffsetMin":120,"durationMinutes":60,"confidence":0.95,"summary":"Slept 1h, 2:00–3:00 PM"}
 
-"Just nursed her on the left for 12 minutes"
+(3) "He napped from 1 to 2:30" — current local time 3:00 PM
+=> {"type":"sleep","data":{"quality":"settled"},"occurredOffsetMin":120,"durationMinutes":90,"confidence":0.9,"summary":"Napped 1h 30m, 1:00–2:30 PM"}
+
+(4) "Wet diaper, like 30 minutes ago"
+=> {"type":"diaper","data":{"kind":"wet"},"occurredOffsetMin":30,"confidence":0.95,"summary":"Wet diaper, 30m ago"}
+
+(5) "She just pooped"
+=> {"type":"diaper","data":{"kind":"dirty"},"occurredOffsetMin":0,"confidence":0.95,"summary":"Dirty diaper"}
+
+(6) "Pee and poop diaper at 11am" — current local time 11:45 AM
+=> {"type":"diaper","data":{"kind":"mixed"},"occurredOffsetMin":45,"confidence":0.9,"summary":"Mixed diaper, 11:00 AM"}
+
+(7) "Just nursed her on the left for 12 minutes"
 => {"type":"feed","data":{"method":"breast","breastSide":"left","breastLeftMinutes":12},"occurredOffsetMin":12,"durationMinutes":12,"confidence":0.9,"summary":"Breast feed (left, 12m)"}
 
-"4oz bottle of formula about an hour ago"
+(8) "4oz bottle of formula about an hour ago"
 => {"type":"feed","data":{"method":"bottle","bottleMl":120,"bottleContents":"formula"},"occurredOffsetMin":60,"confidence":0.85,"summary":"Bottle 120ml (formula)"}
 
-"He's been a little fussy this afternoon"
+(9) "Fed at 9am, breast both sides 10 min each" — current local time 10:00 AM
+=> {"type":"feed","data":{"method":"breast","breastSide":"both","breastLeftMinutes":10,"breastRightMinutes":10},"occurredOffsetMin":60,"durationMinutes":20,"confidence":0.9,"summary":"Breast feed (both, 10+10m), 9:00 AM"}
+
+(10) "He's been a little fussy this afternoon"
 => {"type":"note","data":{"text":"He's been a little fussy this afternoon","mood":"rough"},"occurredOffsetMin":0,"confidence":0.6,"summary":"Note: fussy this afternoon"}
 
 If the audio is silent or unintelligible, still return a note with text="(unclear)" and confidence 0.1.`;
@@ -167,6 +199,11 @@ export async function POST(request: Request) {
   const babyAgeWeeks =
     Number.isFinite(ageWeeksRaw) && ageWeeksRaw >= 0 ? ageWeeksRaw : undefined;
 
+  // Local-clock context — needed so the model can resolve absolute times
+  // like "at 2pm" against the parent's wall clock, not the server's UTC.
+  const clientNowIso = (form.get("clientNowIso") as string | null)?.trim() || "";
+  const clientTimeLabel = (form.get("clientTimeLabel") as string | null)?.trim() || "";
+
   // 2) Whisper transcription. We have to wrap the Blob in a File-shaped
   // upload so the SDK can attach a filename + content-type for the multipart
   // upstream request — Whisper rejects bare Blobs without an extension.
@@ -202,9 +239,21 @@ export async function POST(request: Request) {
   }
 
   // 3) GPT extraction.
-  const userContext = babyAgeWeeks
-    ? `Baby name: ${babyName}. Age: ${babyAgeWeeks} weeks.\nTranscription: ${transcription}`
-    : `Baby name: ${babyName}.\nTranscription: ${transcription}`;
+  // Build a context block the model can lean on: baby info, current
+  // local time (so "at 2pm" resolves to a real offset), and the
+  // transcription verbatim.
+  const contextLines: string[] = [];
+  contextLines.push(`Baby name: ${babyName}.`);
+  if (babyAgeWeeks !== undefined) {
+    contextLines.push(`Age: ${babyAgeWeeks} weeks.`);
+  }
+  if (clientTimeLabel) {
+    contextLines.push(`Current local time: ${clientTimeLabel}.`);
+  } else if (clientNowIso) {
+    contextLines.push(`Current local time (ISO): ${clientNowIso}.`);
+  }
+  contextLines.push(`Transcription: ${transcription}`);
+  const userContext = contextLines.join("\n");
 
   let raw: unknown;
   try {

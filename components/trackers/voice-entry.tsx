@@ -195,6 +195,19 @@ export function VoiceEntry({ onLogged }: VoiceEntryProps = {}) {
       if (typeof ageWeeks === "number") {
         form.append("babyAgeWeeks", String(ageWeeks));
       }
+      // Send the parent's wall-clock time so the model can resolve
+      // absolute times in the transcription ("at 2pm", "from 9 to 9:30")
+      // against their local clock, not the server's UTC.
+      const now = new Date();
+      form.append("clientNowIso", now.toISOString());
+      form.append(
+        "clientTimeLabel",
+        now.toLocaleString(undefined, {
+          weekday: "short",
+          hour: "numeric",
+          minute: "2-digit",
+        }),
+      );
 
       try {
         const res = await fetch("/api/tracker/voice", {

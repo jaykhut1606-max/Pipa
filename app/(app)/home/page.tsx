@@ -224,23 +224,42 @@ export default function HomePage() {
     setWeeks(weeksSince(p.birthDate));
     setAvatar(readAvatar());
 
-    const since = new Date(Date.now() - 7 * 86_400_000).toISOString();
-    fetch(`/api/tracker/event?since=${encodeURIComponent(since)}&limit=500`)
-      .then((r) => r.json() as Promise<{ events: TrackerEvent[] }>)
-      .then((d) => {
-        const list = d.events ?? [];
-        setEvents(list);
-        setInsights(computeInsights(list));
-      })
-      .catch(() => {
-        setEvents([]);
-        setInsights({
-          sleepHrPerDay: 0,
-          feedsPerDay: 0,
-          diapersPerDay: 0,
-          hasData: false,
+    const refetchEvents = () => {
+      const since = new Date(Date.now() - 7 * 86_400_000).toISOString();
+      fetch(`/api/tracker/event?since=${encodeURIComponent(since)}&limit=500`)
+        .then((r) => r.json() as Promise<{ events: TrackerEvent[] }>)
+        .then((d) => {
+          const list = d.events ?? [];
+          setEvents(list);
+          setInsights(computeInsights(list));
+        })
+        .catch(() => {
+          setEvents([]);
+          setInsights({
+            sleepHrPerDay: 0,
+            feedsPerDay: 0,
+            diapersPerDay: 0,
+            hasData: false,
+          });
         });
-      });
+    };
+
+    refetchEvents();
+
+    // Refresh when the parent returns to the tab — typically because
+    // they just voice-logged something on /trackers and the dashboard
+    // should reflect the new event without a manual reload. Cache
+    // headers on /api/tracker/event (max-age=15, swr=60) keep this
+    // cheap.
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") refetchEvents();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("focus", onVisibility);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("focus", onVisibility);
+    };
   }, []);
 
   // Today's stats — separate from the 7-day insights so the user gets

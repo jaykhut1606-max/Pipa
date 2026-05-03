@@ -168,6 +168,22 @@ export default function TodayPage() {
     setBabyName(name);
     const weeks = weeksSince(profile.birthDate);
     void fetchBrief(name, weeks);
+
+    // Re-fetch when the parent comes back to the tab — typically
+    // because they just logged something on /trackers and the brief
+    // should reflect the new event. Cache headers on /api/today/brief
+    // (max-age=60) keep this cheap.
+    const onVisibility = () => {
+      if (document.visibilityState !== "visible") return;
+      const p = readProfile();
+      void fetchBrief(p.name?.trim() || "Baby", weeksSince(p.birthDate));
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("focus", onVisibility);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("focus", onVisibility);
+    };
   }, []);
 
   const handleRefresh = () => {

@@ -18,6 +18,7 @@ import {
   type TrackerTab,
 } from "@/components/trackers/tracker-tabs";
 import { VoiceEntry } from "@/components/trackers/voice-entry";
+import { VoiceTips } from "@/components/trackers/voice-tips";
 import {
   eventOneLiner,
   formatDuration,
@@ -213,6 +214,7 @@ export default function TrackersHubPage() {
                   setTimeout(() => setTab("details"), 1200);
                 }}
               />
+              <VoiceTips />
             </motion.div>
           )}
 
