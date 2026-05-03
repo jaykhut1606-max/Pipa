@@ -50,7 +50,7 @@ export function TabBar() {
       className="sticky bottom-0 z-40 bg-cream/95 backdrop-blur-md border-t border-bone print:hidden"
       aria-label="Primary"
     >
-      <div className="container-app h-16 grid grid-cols-4 items-end pb-2">
+      <div className="container-app h-16 grid grid-cols-4 px-2">
         {TABS.map(({ href, label, icon: Icon }) => {
           const isActive = pathname === href || pathname.startsWith(href + "/");
           return (
@@ -59,18 +59,18 @@ export function TabBar() {
               href={href}
               aria-current={isActive ? "page" : undefined}
               className={cn(
-                "relative h-full flex flex-col items-center justify-end gap-1 transition-colors",
+                "relative flex flex-col items-center justify-center gap-1 px-1 transition-colors",
                 isActive ? "text-plum" : "text-stone hover:text-ink"
               )}
             >
-              <Icon className="size-5" strokeWidth={2.2} aria-hidden />
-              <span className="text-micro uppercase tracking-wider">
+              <Icon className="size-5 shrink-0" strokeWidth={2.2} aria-hidden />
+              <span className="text-[10px] leading-none uppercase tracking-wider truncate max-w-full">
                 {label}
               </span>
               {isActive && (
                 <span
                   aria-hidden
-                  className="absolute bottom-0.5 h-0.5 w-6 rounded-pill bg-plum"
+                  className="absolute bottom-1 h-0.5 w-6 rounded-pill bg-plum"
                 />
               )}
             </Link>

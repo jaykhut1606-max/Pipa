@@ -15,7 +15,7 @@ export function MarketingFooter() {
               alt="Pippa"
               width={48}
               height={48}
-              className="size-12 object-contain"
+              className="size-12 object-contain mix-blend-multiply"
             />
           </Link>
           <p className="text-small text-stone leading-relaxed">

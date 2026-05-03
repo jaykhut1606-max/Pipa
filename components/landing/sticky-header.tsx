@@ -38,7 +38,7 @@ export function StickyHeader() {
             width={56}
             height={56}
             priority
-            className="size-14 object-contain"
+            className="size-14 object-contain mix-blend-multiply"
           />
         </Link>
         <Link
