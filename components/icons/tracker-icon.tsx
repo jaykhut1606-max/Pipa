@@ -57,18 +57,23 @@ function Tile({
   className?: string;
   bg: string;
 }) {
+  // Apple-app-icon-style squircle: ~28% radius for the soft tile shape.
+  // Background uses a layered linear-gradient so the tile catches a
+  // tiny top-edge highlight (lit-from-above) and rolls into a slightly
+  // darker base — the "3D" feel without WebGL.
   const radius = Math.round(size * 0.28);
   return (
     <div
       className={cn(
-        "shrink-0 grid place-items-center shadow-[var(--shadow-soft)]",
-        className
+        "shrink-0 relative grid place-items-center overflow-hidden",
+        className,
       )}
       style={{
         width: size,
         height: size,
-        background: bg,
+        backgroundImage: `linear-gradient(180deg, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0) 22%), linear-gradient(180deg, ${bg} 0%, ${bg} 100%)`,
         borderRadius: radius,
+        boxShadow: `0 1px 0 rgba(255,255,255,0.6) inset, 0 -1px 0 rgba(74,53,64,0.06) inset, 0 4px 10px -2px rgba(74,53,64,0.10), 0 1px 2px rgba(74,53,64,0.05)`,
       }}
     >
       {children}

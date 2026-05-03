@@ -54,8 +54,14 @@ export function TabBar() {
 
   return (
     <nav
-      className="sticky bottom-0 z-40 bg-cream/95 backdrop-blur-md border-t border-bone print:hidden"
+      className="sticky bottom-0 z-40 bg-cream/72 backdrop-blur-xl border-t border-plum/8 print:hidden supports-[backdrop-filter]:bg-cream/72"
       aria-label="Primary"
+      style={{
+        // Tiny top-edge highlight so the glass bar reads as "lit from
+        // above" instead of a flat translucent strip — Linear pattern.
+        boxShadow:
+          "inset 0 1px 0 rgba(255,255,255,0.5), 0 -1px 12px -6px rgba(74,53,64,0.08)",
+      }}
     >
       <div className="container-app h-16 grid grid-cols-5 px-2">
         {TABS.map(({ href, label, icon: Icon }) => {

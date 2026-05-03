@@ -99,21 +99,35 @@ function TodayTile({
   label: string;
   value: string;
 }) {
-  const bg =
+  // Two-layer background: the base soft tone + a quiet conic glow at
+  // the top-right corner. Reads as Oura's "score gradient" feel — depth
+  // without color overload.
+  const tone =
     variant === "sleep"
-      ? "bg-amber-soft"
+      ? { bg: "bg-amber-soft", glow: "from-amber/20" }
       : variant === "feed"
-        ? "bg-soft-blue-soft"
-        : "bg-clay-soft";
+        ? { bg: "bg-soft-blue-soft", glow: "from-vivid-blue/20" }
+        : { bg: "bg-clay-soft", glow: "from-clay/20" };
   return (
     <div
       className={cn(
         "relative rounded-2xl p-4 flex flex-col items-start gap-2 overflow-hidden shadow-[var(--shadow-soft)]",
-        bg
+        tone.bg,
       )}
     >
+      <span
+        aria-hidden
+        className={cn(
+          "absolute -top-6 -right-6 size-20 rounded-full bg-gradient-to-br to-transparent blur-2xl",
+          tone.glow,
+        )}
+      />
+      <span
+        aria-hidden
+        className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/60 to-transparent"
+      />
       <TrackerIcon variant={variant} size={36} />
-      <div className="flex flex-col">
+      <div className="relative flex flex-col">
         <span className="font-display text-h2 text-ink leading-none">
           {value}
         </span>
