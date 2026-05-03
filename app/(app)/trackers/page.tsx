@@ -107,6 +107,10 @@ export default function TrackersHubPage() {
   const [tab, setTab] = useState<TrackerTab>("track");
   const [babyName, setBabyName] = useState<string | null>(null);
   const [events, setEvents] = useState<TrackerEvent[] | null>(null);
+  // The id of the most-recently-saved event, used to flash a glow ring
+  // on the corresponding row in the Details tab so the parent has zero
+  // ambiguity about what just landed. Cleared after the highlight runs.
+  const [newEventId, setNewEventId] = useState<string | null>(null);
 
   useEffect(() => {
     const profile = readProfile();
@@ -193,10 +197,17 @@ export default function TrackersHubPage() {
               </motion.ul>
 
               <VoiceEntry
-                onLogged={async () => {
+                onLogged={async (data) => {
                   await fetchAll();
+                  if (data?.event?.id) {
+                    setNewEventId(data.event.id);
+                    // Clear the highlight after a few seconds so it
+                    // doesn't keep glowing forever.
+                    window.setTimeout(() => setNewEventId(null), 3500);
+                  }
                   // Let the user see the green-check + summary, then jump
-                  // to Details where their new entry sits at the top.
+                  // to Details where their new entry sits at the top
+                  // with a soft glow ring.
                   setTimeout(() => setTab("details"), 1200);
                 }}
               />
@@ -223,7 +234,7 @@ export default function TrackersHubPage() {
               animate="show"
               exit="exit"
             >
-              <DetailsView events={events} />
+              <DetailsView events={events} highlightId={newEventId} />
             </motion.div>
           )}
         </AnimatePresence>
@@ -468,7 +479,13 @@ const GRANULARITY: { key: Granularity; label: string }[] = [
   { key: "monthly", label: "Monthly" },
 ];
 
-function DetailsView({ events }: { events: TrackerEvent[] | null }) {
+function DetailsView({
+  events,
+  highlightId,
+}: {
+  events: TrackerEvent[] | null;
+  highlightId?: string | null;
+}) {
   const [granularity, setGranularity] = useState<Granularity>("daily");
 
   const range = useMemo(() => rangeFor(granularity), [granularity]);
@@ -562,7 +579,7 @@ function DetailsView({ events }: { events: TrackerEvent[] | null }) {
         )}
         {sortedEntries.map((evt) => (
           <li key={evt.id}>
-            <EntryRow event={evt} />
+            <EntryRow event={evt} highlight={evt.id === highlightId} />
           </li>
         ))}
       </ul>
@@ -602,7 +619,13 @@ function StatCard({
   );
 }
 
-function EntryRow({ event }: { event: TrackerEvent }) {
+function EntryRow({
+  event,
+  highlight = false,
+}: {
+  event: TrackerEvent;
+  highlight?: boolean;
+}) {
   const dateText = new Date(event.occurredAt).toLocaleDateString(undefined, {
     month: "short",
     day: "numeric",
@@ -613,7 +636,21 @@ function EntryRow({ event }: { event: TrackerEvent }) {
     : null;
   const detail = eventOneLiner(event);
   return (
-    <article className="rounded-2xl bg-cream shadow-[var(--shadow-soft)] p-4 flex items-center gap-4">
+    <article
+      className={cn(
+        "relative rounded-2xl bg-cream shadow-[var(--shadow-soft)] p-4 flex items-center gap-4 transition-shadow",
+        highlight &&
+          "ring-2 ring-vivid-peach ring-offset-2 ring-offset-cream motion-safe:animate-[entryGlow_2.4s_ease-out_1]",
+      )}
+    >
+      {highlight && (
+        <span
+          aria-hidden
+          className="absolute -top-2 left-4 inline-flex items-center gap-1 rounded-pill bg-vivid-peach text-cream px-2.5 py-0.5 text-micro uppercase tracking-wider font-semibold shadow-[var(--shadow-soft)]"
+        >
+          Just logged
+        </span>
+      )}
       <TrackerIcon variant={event.eventType} size={48} />
       <div className="flex-1 min-w-0 flex flex-col gap-0.5">
         <p className="font-display text-h3 text-plum truncate">

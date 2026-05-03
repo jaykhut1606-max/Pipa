@@ -140,6 +140,19 @@
       opacity: 0.92;
     }
   }
+  /* Soft glow ring used to highlight a freshly-saved tracker entry on
+     the Details list — fades in, holds, fades out. */
+  @keyframes entryGlow {
+    0% {
+      box-shadow: 0 0 0 0 rgba(245, 169, 131, 0);
+    }
+    20% {
+      box-shadow: 0 0 0 6px rgba(245, 169, 131, 0.45);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(245, 169, 131, 0);
+    }
+  }
 }
 
 /* shadcn/ui semantic tokens, remapped to the Pippa palette.

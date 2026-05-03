@@ -1,20 +1,32 @@
 // Pippa Today — anticipatory daily brief.
 //
 // Pulls the last 24h of tracker events, builds a compact context payload,
-// asks gpt-4o-mini for a baby-specific brief (right now / today / tomorrow).
-// Cheap (4o-mini), fast, and the cache control is short — every page load
-// gets a fresh read because the user's context changes minute-to-minute.
+// asks gpt-4o-mini for the qualitative bits (vibe, narrative, patterns,
+// tomorrow). Predictive next-feed/next-nap windows are computed
+// algorithmically from age norms × the most-recent event so they don't
+// drift with the model's mood.
 import { NextResponse } from "next/server";
 import { openai } from "@/lib/openai/client";
 import { listEvents } from "@/lib/data/events";
 import { TODAY_BRIEF_SYSTEM_PROMPT } from "@/lib/openai/prompts/today";
+import {
+  nextFeedWindow,
+  nextSleepWindow,
+  type Window,
+} from "@/lib/today/predict";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
 
 type Brief = {
+  vibe: { tone: "settled" | "steady" | "watchful" | "rough"; headline: string };
   rightNow: { headline: string; detail: string; suggestion: string };
   todayShape: { summary: string; watchFor: string };
+  patterns?: Array<{
+    kind: "good" | "neutral" | "watch";
+    headline: string;
+    detail: string;
+  }>;
   tomorrow: { expect: string };
 };
 
@@ -36,7 +48,6 @@ export async function POST(request: Request) {
   const events = await listEvents({ since, limit: 200 });
 
   const now = Date.now();
-  // Find the most recent of each type so the model can be specific.
   const lastFeed = events.find((e) => e.eventType === "feed");
   const lastSleep = events.find((e) => e.eventType === "sleep");
   const lastDiaper = events.find((e) => e.eventType === "diaper");
@@ -45,6 +56,15 @@ export async function POST(request: Request) {
     iso
       ? Math.max(0, Math.floor((now - new Date(iso).getTime()) / 60_000))
       : null;
+
+  // For sleep "wake time" = occurredAt + duration. If we don't know the
+  // duration we assume the sleep just ended at occurredAt (best-effort).
+  const lastSleepEndIso = lastSleep
+    ? new Date(
+        new Date(lastSleep.occurredAt).getTime() +
+          (lastSleep.durationMinutes ?? 0) * 60_000,
+      ).toISOString()
+    : null;
 
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
@@ -58,6 +78,13 @@ export async function POST(request: Request) {
     else if (e.eventType === "sleep") sleepMinToday += e.durationMinutes ?? 0;
   }
 
+  // Predictive windows — algorithmic, not AI.
+  const nextFeed: Window | null = nextFeedWindow(
+    babyAgeWeeks,
+    lastFeed?.occurredAt ?? null,
+  );
+  const nextSleep: Window | null = nextSleepWindow(babyAgeWeeks, lastSleepEndIso);
+
   const userPayload = {
     babyName,
     babyAgeWeeks,
@@ -66,15 +93,7 @@ export async function POST(request: Request) {
     last24h: {
       eventCount: events.length,
       lastFeedMinutesAgo: minutesAgo(lastFeed?.occurredAt),
-      lastSleepEndedMinutesAgo:
-        lastSleep
-          ? minutesAgo(
-              new Date(
-                new Date(lastSleep.occurredAt).getTime() +
-                  (lastSleep.durationMinutes ?? 0) * 60_000,
-              ).toISOString(),
-            )
-          : null,
+      lastSleepEndedMinutesAgo: minutesAgo(lastSleepEndIso ?? undefined),
       lastSleepDurationMinutes: lastSleep?.durationMinutes ?? null,
       lastDiaperMinutesAgo: minutesAgo(lastDiaper?.occurredAt),
     },
@@ -103,6 +122,10 @@ export async function POST(request: Request) {
 
   return NextResponse.json({
     brief,
+    predictions: {
+      nextFeed,
+      nextSleep,
+    },
     context: {
       feedsToday,
       diapersToday,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { ArrowUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -8,11 +8,36 @@ type Props = {
   onSend: (text: string) => void;
   disabled?: boolean;
   placeholder?: string;
+  // Pre-fills the textarea once on mount and again whenever the value
+  // changes — used by `/today` to seed the chat with today's brief
+  // context so the parent picks up mid-conversation.
+  defaultValue?: string;
 };
 
-export function ChatInput({ onSend, disabled, placeholder }: Props) {
-  const [value, setValue] = useState("");
+export function ChatInput({
+  onSend,
+  disabled,
+  placeholder,
+  defaultValue,
+}: Props) {
+  const [value, setValue] = useState(defaultValue ?? "");
   const ref = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (defaultValue !== undefined) {
+      setValue(defaultValue);
+      // Move caret to the end so the parent can keep typing immediately.
+      requestAnimationFrame(() => {
+        const el = ref.current;
+        if (!el) return;
+        el.focus();
+        const len = el.value.length;
+        el.setSelectionRange(len, len);
+        el.style.height = "auto";
+        el.style.height = Math.min(el.scrollHeight, 160) + "px";
+      });
+    }
+  }, [defaultValue]);
 
   function autoResize() {
     const el = ref.current;

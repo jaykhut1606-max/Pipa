@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Image from "next/image";
+import { useSearchParams } from "next/navigation";
 import { differenceInWeeks } from "date-fns";
 import { NavBar } from "@/components/primitives/nav-bar";
 import { SpeechBubble } from "@/components/primitives/speech-bubble";
@@ -26,6 +27,28 @@ function uid() {
 }
 
 export default function ChatPage() {
+  // useSearchParams suspends during prerender — wrap the inner client
+  // page that reads it in a Suspense boundary so static export works.
+  return (
+    <Suspense fallback={<ChatPageInner inputDraft="" />}>
+      <ChatPageWithSearch />
+    </Suspense>
+  );
+}
+
+function ChatPageWithSearch() {
+  const searchParams = useSearchParams();
+  const seed = searchParams.get("seed") ?? "";
+  // Pre-fill the input with a starter line when the user lands here
+  // from a "Ask Pippa about today" link. Lets them just type their
+  // actual question after the colon.
+  const inputDraft = seed
+    ? `About today's brief — ${seed}\n\nMy question: `
+    : "";
+  return <ChatPageInner inputDraft={inputDraft} />;
+}
+
+function ChatPageInner({ inputDraft }: { inputDraft: string }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [streaming, setStreaming] = useState(false);
   const [baby, setBaby] = useState<BabyProfile>({});
@@ -155,6 +178,7 @@ export default function ChatPage() {
       <ChatInput
         onSend={send}
         disabled={streaming}
+        defaultValue={inputDraft}
         placeholder={
           baby.name ? `Ask about ${baby.name}…` : "Ask Pippa anything…"
         }
