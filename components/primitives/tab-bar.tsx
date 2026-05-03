@@ -2,7 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ClipboardList, Home, MessageCircle, Sparkles } from "lucide-react";
+import {
+  ClipboardList,
+  Home,
+  MessageCircle,
+  Sparkles,
+  Sun,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type Tab = {
@@ -11,13 +17,14 @@ type Tab = {
   icon: typeof Home;
 };
 
-// Four-tab nav. Matches the reference IA: Home is the dashboard, Trackers
-// rolls up Track / Summary / Details, Milestones is the per-bucket
-// development tracker, Chat is the pediatric AI thread. Profile is reached
-// via the Home header pill rather than a tab — same as the reference.
+// Five-tab nav. The middle slot is "Today" — Pippa's anticipatory AI
+// brief (the USP): a real-time read on what the baby likely needs right
+// now, derived from age + recent events. Everything else stays the same:
+// Home dashboard, Trackers, Milestones, Chat.
 const TABS: Tab[] = [
   { href: "/home", label: "Home", icon: Home },
   { href: "/trackers", label: "Trackers", icon: ClipboardList },
+  { href: "/today", label: "Today", icon: Sun },
   { href: "/milestones", label: "Milestones", icon: Sparkles },
   { href: "/chat", label: "Chat", icon: MessageCircle },
 ];
@@ -50,7 +57,7 @@ export function TabBar() {
       className="sticky bottom-0 z-40 bg-cream/95 backdrop-blur-md border-t border-bone print:hidden"
       aria-label="Primary"
     >
-      <div className="container-app h-16 grid grid-cols-4 px-2">
+      <div className="container-app h-16 grid grid-cols-5 px-2">
         {TABS.map(({ href, label, icon: Icon }) => {
           const isActive = pathname === href || pathname.startsWith(href + "/");
           return (

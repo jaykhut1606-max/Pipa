@@ -2,6 +2,7 @@
 // Wrapped in try/catch because Safari Private Browsing throws on every write
 // and we'd rather drop the persistence than crash the onboarding flow.
 export const PROFILE_KEY = "pippa.baby";
+export const BABY_ID_KEY = "pippa.baby.id";
 
 export type BabyProfile = {
   name: string;
@@ -10,6 +11,26 @@ export type BabyProfile = {
   concerns: string[];
   onboardedAt: string; // ISO datetime
 };
+
+// The DB row id, written after the first successful POST /api/demo/baby
+// so subsequent edits update the same row instead of inserting twice.
+export function readBabyId(): string | undefined {
+  if (typeof window === "undefined") return undefined;
+  try {
+    return window.localStorage.getItem(BABY_ID_KEY) ?? undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+export function writeBabyId(id: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(BABY_ID_KEY, id);
+  } catch {
+    // private mode — drop silently
+  }
+}
 
 export function readProfile(): Partial<BabyProfile> {
   if (typeof window === "undefined") return {};

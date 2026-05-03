@@ -7,6 +7,8 @@
 // because it has a deterministic on-mount sequence with overlap timing.
 import { StickyHeader } from "@/components/landing/sticky-header";
 import { HeroStage } from "@/components/landing/hero-stage";
+import { StatsStrip } from "@/components/landing/stats-strip";
+import { HowItWorks } from "@/components/landing/how-it-works";
 import { TrustMarquee } from "@/components/landing/trust-marquee";
 import { FeatureCard } from "@/components/landing/feature-card";
 import { SectionHeading } from "@/components/landing/section-heading";
@@ -120,7 +122,13 @@ export default function HomePage() {
         <HeroStage />
       </div>
 
+      {/* By-the-numbers proof points — sets credibility before the trust chips */}
+      <StatsStrip />
+
       <TrustMarquee />
+
+      {/* How it works — three steps, plain English */}
+      <HowItWorks />
 
       {/* Section: What Pippa reads — center aligned */}
       <section className="container-marketing py-20 sm:py-24 flex flex-col gap-12">

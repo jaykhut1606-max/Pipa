@@ -551,14 +551,14 @@ export default function HomePage() {
           <div className="grid grid-cols-2 gap-3">
             <Link
               href="/scan/cry"
-              className="h-12 rounded-pill bg-vivid-peach text-cream font-medium inline-flex items-center justify-center gap-2 shadow-[var(--shadow-pop)]"
+              className="h-14 rounded-pill bg-vivid-peach text-cream font-semibold inline-flex items-center justify-center gap-2 shadow-[var(--shadow-pop)] hover:bg-vivid-peach/90 transition-colors"
             >
               <Mic className="size-4" aria-hidden />
               Translate cry
             </Link>
             <Link
               href="/trackers"
-              className="h-12 rounded-pill bg-vivid-peach text-cream font-medium inline-flex items-center justify-center gap-2 shadow-[var(--shadow-pop)]"
+              className="h-14 rounded-pill bg-vivid-peach text-cream font-semibold inline-flex items-center justify-center gap-2 shadow-[var(--shadow-pop)] hover:bg-vivid-peach/90 transition-colors"
             >
               <ClipboardList className="size-4" aria-hidden />
               Log routine

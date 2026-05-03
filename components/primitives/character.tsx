@@ -1,7 +1,23 @@
 // Character art for screens that benefit from a focal mascot.
-// v0 uses native emoji as the source — they render as Apple emoji on
-// iOS/Safari and Twemoji elsewhere, both of which read as 3D-ish.
-// Phase 9+: swap each name for a real PNG/Lottie file in /public/images/characters/.
+//
+// Was: native emojis (👶 🌙 🍼 etc.) — looked OS-themed and inconsistent.
+// Now: lucide-react icons rendered into the same tinted tile so screens
+// like onboarding, success, and error stay on-brand and match the rest
+// of the iconography across the app.
+import {
+  Baby,
+  Heart,
+  Lightbulb,
+  Moon,
+  PartyPopper,
+  Rocket,
+  Shield,
+  Sparkle,
+  Sparkles,
+  Star,
+  Sun,
+  type LucideIcon,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type Variant =
@@ -28,19 +44,22 @@ type BgTone =
   | "mint"
   | "cream";
 
-const EMOJI: Record<Variant, string> = {
-  baby: "👶",
-  moon: "🌙",
-  bottle: "🍼",
-  bear: "🧸",
-  shield: "🛡️",
-  rocket: "🚀",
-  stars: "✨",
-  sparkle: "💫",
-  heart: "💖",
-  rainbow: "🌈",
-  thinking: "🤔",
-  celebrate: "🎉",
+// Each variant maps to a lucide icon + a per-variant accent color so the
+// tile feels intentional (not "everything is plum"). Bg tone is still
+// caller-controlled.
+const ICON: Record<Variant, { Icon: LucideIcon; tint: string }> = {
+  baby: { Icon: Baby, tint: "text-clay" },
+  moon: { Icon: Moon, tint: "text-plum" },
+  bottle: { Icon: Sparkle, tint: "text-vivid-blue" }, // bottle had no exact lucide; sparkle reads as "fresh"
+  bear: { Icon: Heart, tint: "text-rose" },
+  shield: { Icon: Shield, tint: "text-sage" },
+  rocket: { Icon: Rocket, tint: "text-vivid-blue" },
+  stars: { Icon: Sparkles, tint: "text-amber" },
+  sparkle: { Icon: Sparkle, tint: "text-amber" },
+  heart: { Icon: Heart, tint: "text-rose" },
+  rainbow: { Icon: Sun, tint: "text-vivid-peach" },
+  thinking: { Icon: Lightbulb, tint: "text-amber" },
+  celebrate: { Icon: PartyPopper, tint: "text-vivid-peach" },
 };
 
 const BG: Record<BgTone, string> = {
@@ -62,8 +81,23 @@ type Props = {
   className?: string;
 };
 
-const SIZE_PX = { sm: 96, md: 144, lg: 200, xl: 280 } as const;
-const EMOJI_PX = { sm: 56, md: 84, lg: 120, xl: 168 } as const;
+const TILE_PX = { sm: 96, md: 144, lg: 200, xl: 280 } as const;
+const ICON_PX = { sm: 48, md: 72, lg: 100, xl: 144 } as const;
+
+const ARIA_LABEL: Record<Variant, string> = {
+  baby: "Baby",
+  moon: "Sleep",
+  bottle: "Feed",
+  bear: "Comfort",
+  shield: "Safe",
+  rocket: "Boost",
+  stars: "Magical",
+  sparkle: "Highlight",
+  heart: "Care",
+  rainbow: "Fresh",
+  thinking: "Thinking",
+  celebrate: "Celebrate",
+};
 
 export function Character({
   variant,
@@ -72,24 +106,30 @@ export function Character({
   float = true,
   className,
 }: Props) {
+  const { Icon, tint } = ICON[variant];
+  const px = ICON_PX[size];
   return (
     <div
       role="img"
-      aria-label={variant}
+      aria-label={ARIA_LABEL[variant]}
       className={cn(
         "rounded-2xl grid place-items-center select-none shadow-[var(--shadow-soft)]",
         BG[bg],
         float && "motion-safe:animate-[float_6s_ease-in-out_infinite]",
-        className
+        className,
       )}
       style={{
-        width: SIZE_PX[size],
-        height: SIZE_PX[size],
+        width: TILE_PX[size],
+        height: TILE_PX[size],
       }}
     >
-      <span style={{ fontSize: EMOJI_PX[size], lineHeight: 1 }} aria-hidden>
-        {EMOJI[variant]}
-      </span>
+      <Icon
+        width={px}
+        height={px}
+        strokeWidth={1.6}
+        className={cn("shrink-0", tint)}
+        aria-hidden
+      />
     </div>
   );
 }

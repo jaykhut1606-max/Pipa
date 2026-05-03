@@ -16,6 +16,8 @@ import {
 import {
   writeProfile,
   readProfile,
+  readBabyId,
+  writeBabyId,
 } from "@/components/onboarding/profile-store";
 import { cn } from "@/lib/utils";
 
@@ -57,6 +59,31 @@ export default function ConcernsPage() {
       concerns: selected,
       onboardedAt: new Date().toISOString(),
     });
+
+    // Mirror the full profile into Supabase via /api/demo/baby. This is
+    // the "data is saved in the database" half of the contract — the
+    // localStorage write above is the "saved on this phone" half.
+    // Non-blocking: a failed save still lets the user finish onboarding.
+    const profile = readProfile();
+    void fetch("/api/demo/baby", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        babyId: readBabyId(),
+        name: profile.name,
+        birthDate: profile.birthDate,
+        feedingType: profile.feedingType,
+        concerns: selected,
+      }),
+    })
+      .then((r) => r.json())
+      .then((data: { babyId?: string }) => {
+        if (data?.babyId) writeBabyId(data.babyId);
+      })
+      .catch(() => {
+        // best-effort
+      });
+
     router.push("/home");
   };
 
