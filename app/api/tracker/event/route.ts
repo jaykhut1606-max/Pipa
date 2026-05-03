@@ -124,5 +124,15 @@ export async function GET(request: Request) {
     const n = Number.parseInt(limit, 10);
     if (Number.isFinite(n) && n > 0) opts.limit = Math.min(n, 1000);
   }
-  return NextResponse.json({ events: await listEvents(opts) });
+  return NextResponse.json(
+    { events: await listEvents(opts) },
+    {
+      headers: {
+        // Short private cache so a back-button or quick re-open replays
+        // the response without hitting Supabase. Stale-while-revalidate
+        // keeps perceived latency near zero on tab switches.
+        "Cache-Control": "private, max-age=15, stale-while-revalidate=60",
+      },
+    },
+  );
 }

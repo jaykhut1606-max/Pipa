@@ -2,24 +2,50 @@
 // GSAP timeline, trust marquee, two feature rows, testimonials, FAQ,
 // pricing teaser, final CTA, footer.
 //
-// Section helpers live in components/landing/*. Most reveals are
-// declarative (framer-motion whileInView). The hero uses a GSAP timeline
-// because it has a deterministic on-mount sequence with overlap timing.
+// Above-the-fold (sticky header + hero) ships in the initial bundle.
+// Everything below is dynamic-imported so the GSAP marquee, the
+// chaos→calm illustration, the testimonial/FAQ/pricing components, and
+// the footer don't drag down the LCP. They render as soon as the user
+// scrolls past the hero — fast enough to feel native.
+import dynamic from "next/dynamic";
 import { StickyHeader } from "@/components/landing/sticky-header";
 import { HeroStage } from "@/components/landing/hero-stage";
 import { StatsStrip } from "@/components/landing/stats-strip";
-import { HowItWorks } from "@/components/landing/how-it-works";
-import { TrustMarquee } from "@/components/landing/trust-marquee";
-import { FeatureCard } from "@/components/landing/feature-card";
 import { SectionHeading } from "@/components/landing/section-heading";
 import { Reveal } from "@/components/landing/reveal";
-import { MiniChart } from "@/components/landing/mini-chart";
-import { TestimonialCard } from "@/components/landing/testimonial-card";
-import { FaqRow } from "@/components/landing/faq-row";
-import { PricingStrip } from "@/components/landing/pricing-strip";
-import { FinalCta } from "@/components/landing/final-cta";
-import { MarketingFooter } from "@/components/landing/footer";
-import { ChaosToCalmSection } from "@/components/landing/chaos-to-calm-section";
+import { FeatureCard } from "@/components/landing/feature-card";
+
+const HowItWorks = dynamic(() =>
+  import("@/components/landing/how-it-works").then((m) => m.HowItWorks),
+);
+const TrustMarquee = dynamic(() =>
+  import("@/components/landing/trust-marquee").then((m) => m.TrustMarquee),
+);
+const MiniChart = dynamic(() =>
+  import("@/components/landing/mini-chart").then((m) => m.MiniChart),
+);
+const TestimonialCard = dynamic(() =>
+  import("@/components/landing/testimonial-card").then(
+    (m) => m.TestimonialCard,
+  ),
+);
+const FaqRow = dynamic(() =>
+  import("@/components/landing/faq-row").then((m) => m.FaqRow),
+);
+const PricingStrip = dynamic(() =>
+  import("@/components/landing/pricing-strip").then((m) => m.PricingStrip),
+);
+const FinalCta = dynamic(() =>
+  import("@/components/landing/final-cta").then((m) => m.FinalCta),
+);
+const MarketingFooter = dynamic(() =>
+  import("@/components/landing/footer").then((m) => m.MarketingFooter),
+);
+const ChaosToCalmSection = dynamic(() =>
+  import("@/components/landing/chaos-to-calm-section").then(
+    (m) => m.ChaosToCalmSection,
+  ),
+);
 
 const READS = [
   {

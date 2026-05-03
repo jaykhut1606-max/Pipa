@@ -120,17 +120,24 @@ export async function POST(request: Request) {
     );
   }
 
-  return NextResponse.json({
-    brief,
-    predictions: {
-      nextFeed,
-      nextSleep,
+  return NextResponse.json(
+    {
+      brief,
+      predictions: { nextFeed, nextSleep },
+      context: {
+        feedsToday,
+        diapersToday,
+        sleepMinToday,
+        hasEvents: events.length > 0,
+      },
     },
-    context: {
-      feedsToday,
-      diapersToday,
-      sleepMinToday,
-      hasEvents: events.length > 0,
+    {
+      headers: {
+        // 60s private cache — quick re-navigation between Today and other
+        // tabs replays the same brief instead of re-hitting OpenAI. The
+        // "Refresh" button bypasses by mounting fresh.
+        "Cache-Control": "private, max-age=60, stale-while-revalidate=120",
+      },
     },
-  });
+  );
 }

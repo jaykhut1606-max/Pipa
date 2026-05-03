@@ -120,10 +120,12 @@ export default function TrackersHubPage() {
   }, []);
 
   const fetchAll = useCallback(async () => {
-    const since = new Date(Date.now() - 60 * 86_400_000).toISOString();
+    // Last 14 days is enough for the Day/Week/Month tabs. 200 cap keeps
+    // the JSON small and the Details list snappy without virtualization.
+    const since = new Date(Date.now() - 14 * 86_400_000).toISOString();
     try {
       const res = await fetch(
-        `/api/tracker/event?since=${encodeURIComponent(since)}&limit=500`
+        `/api/tracker/event?since=${encodeURIComponent(since)}&limit=200`,
       );
       const data = (await res.json()) as { events: TrackerEvent[] };
       setEvents(data.events ?? []);
