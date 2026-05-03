@@ -138,7 +138,10 @@ export default function FeedLogPage() {
         throw new Error(msg);
       }
       toast.success("Logged!");
-      router.push("/trackers");
+      // Cache-bust query param so /trackers re-runs fetchAll on mount —
+      // soft-navigating without it leaves the parent's events state stale
+      // and the freshly-saved event invisible until a hard reload.
+      router.push(`/trackers?logged=${Date.now()}`);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Something went wrong.";
       toast.error(msg);

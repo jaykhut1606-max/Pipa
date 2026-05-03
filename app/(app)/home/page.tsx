@@ -227,7 +227,10 @@ export default function HomePage() {
 
     const refetchEvents = () => {
       const since = new Date(Date.now() - 7 * 86_400_000).toISOString();
-      fetch(`/api/tracker/event?since=${encodeURIComponent(since)}&limit=500`)
+      fetch(
+        `/api/tracker/event?since=${encodeURIComponent(since)}&limit=500`,
+        { cache: "no-store" },
+      )
         .then((r) => r.json() as Promise<{ events: TrackerEvent[] }>)
         .then((d) => {
           const list = d.events ?? [];

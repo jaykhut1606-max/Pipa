@@ -128,10 +128,11 @@ export async function GET(request: Request) {
     { events: await listEvents(opts) },
     {
       headers: {
-        // Short private cache so a back-button or quick re-open replays
-        // the response without hitting Supabase. Stale-while-revalidate
-        // keeps perceived latency near zero on tab switches.
-        "Cache-Control": "private, max-age=15, stale-while-revalidate=60",
+        // No cache — the previous max-age=15 masked freshly logged
+        // events for the user immediately after they hit save (the
+        // browser served the pre-log response from its HTTP cache).
+        // Real-time correctness wins over the few ms of saved latency.
+        "Cache-Control": "no-store",
       },
     },
   );

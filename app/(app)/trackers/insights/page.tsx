@@ -100,6 +100,10 @@ export default function InsightsPage() {
       try {
         const res = await fetch(`/api/tracker/insights?${params.toString()}`, {
           signal,
+          // Always pull fresh — insights are derived from logged events
+          // and the parent expects to see new logs reflected the moment
+          // they navigate here from /trackers.
+          cache: "no-store",
         });
         if (!res.ok) {
           throw new Error(`HTTP ${res.status}`);
@@ -124,6 +128,21 @@ export default function InsightsPage() {
     const ctrl = new AbortController();
     fetchInsights(ctrl.signal);
     return () => ctrl.abort();
+  }, [fetchInsights]);
+
+  // Refetch when the parent comes back to this tab — typically because
+  // they just logged something on /trackers and the insights graphs
+  // should reflect the new event.
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") void fetchInsights();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("focus", onVisibility);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("focus", onVisibility);
+    };
   }, [fetchInsights]);
 
   // Auto-trigger the print dialog when arrived from the Home "For

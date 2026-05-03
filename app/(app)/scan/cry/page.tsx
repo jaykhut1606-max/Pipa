@@ -87,7 +87,8 @@ export default function CryPage() {
       try {
         const since = new Date(Date.now() - 86_400_000).toISOString();
         const res = await fetch(
-          `/api/tracker/event?since=${encodeURIComponent(since)}&limit=200`
+          `/api/tracker/event?since=${encodeURIComponent(since)}&limit=200`,
+          { cache: "no-store" },
         );
         if (res.ok) {
           const data = (await res.json()) as {

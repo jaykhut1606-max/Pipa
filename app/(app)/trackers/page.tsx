@@ -8,8 +8,9 @@
 // No auto-seeding: every parent starts at zero. Empty timeline is the
 // honest, encouraging state — it gets populated as they log entries
 // (manually via /trackers/{type}/log or by voice via the mic card).
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
 import { ChevronLeft, ChevronRight, Maximize2 } from "lucide-react";
 import { TrackerIcon } from "@/components/icons/tracker-icon";
@@ -105,6 +106,25 @@ const EVENT_TITLE: Record<TrackerEventType, string> = {
 };
 
 export default function TrackersHubPage() {
+  // useSearchParams suspends during prerender — wrap the inner client
+  // page that reads it so static export still works.
+  return (
+    <Suspense fallback={<TrackersHubInner loggedKey="" />}>
+      <TrackersHubWithSearch />
+    </Suspense>
+  );
+}
+
+function TrackersHubWithSearch() {
+  const searchParams = useSearchParams();
+  // /trackers/{type}/log and the voice flow push back here with
+  // ?logged=<timestamp> so this page knows to refetch instead of
+  // serving the prior render's stale events state.
+  const loggedKey = searchParams.get("logged") ?? "";
+  return <TrackersHubInner loggedKey={loggedKey} />;
+}
+
+function TrackersHubInner({ loggedKey }: { loggedKey: string }) {
   const [tab, setTab] = useState<TrackerTab>("track");
   const [babyName, setBabyName] = useState<string | null>(null);
   const [events, setEvents] = useState<TrackerEvent[] | null>(null);
@@ -125,8 +145,11 @@ export default function TrackersHubPage() {
     // the JSON small and the Details list snappy without virtualization.
     const since = new Date(Date.now() - 14 * 86_400_000).toISOString();
     try {
+      // cache: 'no-store' belt-and-braces with the no-store header on
+      // the API — the user expects logs to show up the instant they save.
       const res = await fetch(
         `/api/tracker/event?since=${encodeURIComponent(since)}&limit=200`,
+        { cache: "no-store" },
       );
       const data = (await res.json()) as { events: TrackerEvent[] };
       setEvents(data.events ?? []);
@@ -144,6 +167,24 @@ export default function TrackersHubPage() {
     })();
     return () => {
       cancelled = true;
+    };
+    // loggedKey changes whenever a manual log redirects back here with
+    // ?logged=<ts>; depending on it forces this effect to re-run and
+    // pull the freshly-saved event into Summary + Details.
+  }, [fetchAll, loggedKey]);
+
+  // Refetch when the parent comes back to this tab — same pattern as
+  // /home and /today. Catches the case where they log on /scan/cry
+  // (which auto-routes to /result) then come back to /trackers.
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") void fetchAll();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("focus", onVisibility);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("focus", onVisibility);
     };
   }, [fetchAll]);
 
