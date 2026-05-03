@@ -23,6 +23,7 @@ import {
   saveDemoScan,
   getDemoScan,
   listDemoScans,
+  clearDemoScans,
   type DemoScan,
 } from "@/lib/scan-store";
 import { getAdminClient, isSupabaseEnabled } from "@/lib/supabase/admin";
@@ -102,6 +103,23 @@ export async function getScan(id: string): Promise<DemoScan | undefined> {
   }
   if (!data) return undefined;
   return rowToScan(data as unknown as ScanRow);
+}
+
+export async function clearScans(): Promise<void> {
+  if (!isSupabaseEnabled()) {
+    clearDemoScans();
+    return;
+  }
+  const sb = getAdminClient()!;
+  // Delete only demo rows (those with demo_baby_name set), to keep this
+  // safe to call once real auth lands.
+  const { error } = await sb
+    .from("scans")
+    .delete()
+    .not("demo_baby_name", "is", null);
+  if (error) {
+    console.error("[scans.clearScans] supabase delete failed", error);
+  }
 }
 
 export async function listScans(limit = 30): Promise<DemoScan[]> {

@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
+import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { Logo } from "@/components/brand/logo";
 import { Wordmark } from "@/components/brand/wordmark";
@@ -49,6 +51,14 @@ export default function PaywallPage() {
   return (
     <GradientHero tone="peach" className="min-h-screen flex flex-col">
       <header className="container-app flex items-center justify-between py-5">
+        <Link
+          href="/home"
+          aria-label="Back"
+          className="inline-flex items-center gap-1 text-small text-stone hover:text-ink h-11"
+        >
+          <ArrowLeft className="size-4" aria-hidden />
+          <span>Back</span>
+        </Link>
         <div className="flex items-center gap-2">
           <Logo size={28} />
           <Wordmark className="text-h3" />

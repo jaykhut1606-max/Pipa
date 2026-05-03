@@ -108,7 +108,7 @@ export default function ChatPage() {
 
   return (
     <div className="flex-1 flex flex-col bg-cream">
-      <NavBar title="Chat with Pippa" />
+      <NavBar title="Chat with Pippa" showBack backHref="/home" />
 
       {isEmpty ? (
         <div className="flex-1 flex flex-col items-center justify-center gap-6 px-6 text-center">

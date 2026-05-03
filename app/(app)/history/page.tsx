@@ -89,7 +89,7 @@ export default async function HistoryPage() {
 
   return (
     <div className="flex-1 flex flex-col bg-cream">
-      <NavBar title="History" />
+      <NavBar title="History" showBack backHref="/home" />
 
       {isEmpty ? (
         <main className="flex-1 flex flex-col items-center justify-center text-center gap-6 px-6 pb-32">

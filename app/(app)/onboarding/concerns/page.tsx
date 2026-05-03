@@ -40,8 +40,19 @@ export default function ConcernsPage() {
 
   const isValid = acknowledged; // Concerns themselves are optional.
 
-  const handleFinish = () => {
+  const handleFinish = async () => {
     if (!isValid) return;
+    // First-time onboarding completion → wipe seeded/stale demo data so
+    // this parent starts from an empty timeline. Re-onboarding (already
+    // has onboardedAt) keeps existing entries.
+    const wasOnboarded = Boolean(readProfile().onboardedAt);
+    if (!wasOnboarded) {
+      try {
+        await fetch("/api/demo/reset", { method: "POST" });
+      } catch {
+        // Non-blocking: a failed reset shouldn't stop the user finishing.
+      }
+    }
     writeProfile({
       concerns: selected,
       onboardedAt: new Date().toISOString(),

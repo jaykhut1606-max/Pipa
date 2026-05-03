@@ -135,7 +135,14 @@ export default function TrackersHubPage() {
         const probe = await fetch("/api/tracker/event?limit=1");
         const probeData = (await probe.json()) as { events: TrackerEvent[] };
         if (cancelled) return;
-        if ((probeData.events ?? []).length === 0) {
+        // Only seed demo events for anonymous visitors (pre-onboarding).
+        // Once a parent has onboarded, their timeline starts empty and grows
+        // from real entries they log themselves.
+        const isOnboarded =
+          typeof window !== "undefined"
+            ? Boolean(readProfile().onboardedAt)
+            : false;
+        if (!isOnboarded && (probeData.events ?? []).length === 0) {
           const seedName =
             (typeof window !== "undefined"
               ? readProfile().name
@@ -207,7 +214,14 @@ export default function TrackersHubPage() {
                 ))}
               </motion.ul>
 
-              <VoiceEntry onLogged={() => fetchAll()} />
+              <VoiceEntry
+                onLogged={async () => {
+                  await fetchAll();
+                  // Let the user see the green-check + summary, then jump
+                  // to Details where their new entry sits at the top.
+                  setTimeout(() => setTab("details"), 1200);
+                }}
+              />
             </motion.div>
           )}
 

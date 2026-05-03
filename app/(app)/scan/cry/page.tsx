@@ -23,6 +23,7 @@ import { Character } from "@/components/primitives/character";
 import { TipRow } from "@/components/primitives/tip-row";
 import { PrimaryCTA } from "@/components/primitives/primary-cta";
 import { readProfile } from "@/components/onboarding/profile-store";
+import { blobToWav } from "@/lib/audio/wav";
 import { cn } from "@/lib/utils";
 
 type State = "idle" | "recording" | "uploading" | "tooShort" | "error";
@@ -80,8 +81,18 @@ export default function CryPage() {
     async (blob: Blob) => {
       setState("uploading");
       try {
+        // OpenAI's audio model only accepts wav/mp3. Transcode webm/opus
+        // (Chromium) and mp4/m4a (Safari) to PCM wav in the browser before
+        // upload. Falls back to the raw blob if WebAudio isn't available.
+        let wav: Blob;
+        try {
+          wav = await blobToWav(blob);
+        } catch {
+          wav = blob;
+        }
+
         const fd = new FormData();
-        fd.append("audio", blob, "cry.webm");
+        fd.append("audio", wav, "cry.wav");
         fd.append("babyName", babyContext.name);
         fd.append("babyAgeWeeks", String(babyContext.ageWeeks));
         fd.append("feedingType", babyContext.feedingType);
