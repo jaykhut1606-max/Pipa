@@ -32,6 +32,12 @@ type BabyContext = {
   name: string;
   ageWeeks: number;
   feedingType: string;
+  // Minutes since the most recent event of each type, pulled from the
+  // tracker timeline. The cry analyzer leans on these to differentiate
+  // hungry/tired/discomfort — without them the model defaults to "hungry"
+  // for almost everything.
+  minutesSinceFeed?: number;
+  minutesSinceSleep?: number;
 };
 
 const DEFAULT_CONTEXT: BabyContext = {
@@ -65,16 +71,61 @@ export default function CryPage() {
   const [babyContext, setBabyContext] =
     useState<BabyContext>(DEFAULT_CONTEXT);
 
-  // Pull the baby profile out of localStorage once we're on the client.
+  // Pull the baby profile + the most recent feed/sleep events. The events
+  // give the analyzer the time-since-last-* signals it needs to actually
+  // differentiate cry types (the model defaults to "hungry" without them).
   useEffect(() => {
     const profile = readProfile();
     const weeks = weeksSince(profile.birthDate) ?? DEFAULT_CONTEXT.ageWeeks;
     const feeding = profile.feedingType?.[0] ?? DEFAULT_CONTEXT.feedingType;
-    setBabyContext({
-      name: profile.name?.trim() || DEFAULT_CONTEXT.name,
-      ageWeeks: weeks,
-      feedingType: feeding,
-    });
+
+    // Best-effort: a failed fetch just means we send "unknown" times,
+    // matching the route's default.
+    (async () => {
+      let minutesSinceFeed: number | undefined;
+      let minutesSinceSleep: number | undefined;
+      try {
+        const since = new Date(Date.now() - 86_400_000).toISOString();
+        const res = await fetch(
+          `/api/tracker/event?since=${encodeURIComponent(since)}&limit=200`
+        );
+        if (res.ok) {
+          const data = (await res.json()) as {
+            events?: Array<{ eventType: string; occurredAt: string; durationMinutes?: number }>;
+          };
+          const events = data.events ?? [];
+          const now = Date.now();
+          const lastFeed = events.find((e) => e.eventType === "feed");
+          if (lastFeed) {
+            minutesSinceFeed = Math.max(
+              0,
+              Math.floor((now - new Date(lastFeed.occurredAt).getTime()) / 60_000)
+            );
+          }
+          // For sleep, "last slept" means when the baby last woke — i.e.
+          // occurredAt + duration. If duration unknown, use occurredAt.
+          const lastSleep = events.find((e) => e.eventType === "sleep");
+          if (lastSleep) {
+            const wokeAt =
+              new Date(lastSleep.occurredAt).getTime() +
+              (lastSleep.durationMinutes ?? 0) * 60_000;
+            minutesSinceSleep = Math.max(
+              0,
+              Math.floor((now - wokeAt) / 60_000)
+            );
+          }
+        }
+      } catch {
+        // ignore — page works without it
+      }
+      setBabyContext({
+        name: profile.name?.trim() || DEFAULT_CONTEXT.name,
+        ageWeeks: weeks,
+        feedingType: feeding,
+        minutesSinceFeed,
+        minutesSinceSleep,
+      });
+    })();
   }, []);
 
   const upload = useCallback(
@@ -96,6 +147,12 @@ export default function CryPage() {
         fd.append("babyName", babyContext.name);
         fd.append("babyAgeWeeks", String(babyContext.ageWeeks));
         fd.append("feedingType", babyContext.feedingType);
+        if (typeof babyContext.minutesSinceFeed === "number") {
+          fd.append("minutesSinceFeed", String(babyContext.minutesSinceFeed));
+        }
+        if (typeof babyContext.minutesSinceSleep === "number") {
+          fd.append("minutesSinceSleep", String(babyContext.minutesSinceSleep));
+        }
 
         const res = await fetch("/api/scan/cry", {
           method: "POST",

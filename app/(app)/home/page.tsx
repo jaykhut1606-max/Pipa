@@ -225,6 +225,70 @@ export default function HomePage() {
           </div>
         </article>
 
+        {/* INSIGHTS — the USP. Lives high on the page so the value of the
+            tracker investment is visible before the parent decides whether
+            to log anything. The plum-on-cream hero treatment + double CTA
+            make it unmissable. */}
+        <article className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-plum to-plum/90 text-cream p-5 shadow-[var(--shadow-pop)]">
+          <div className="absolute -right-6 -top-6 size-24 rounded-full bg-amber/30 blur-2xl" aria-hidden />
+          <div className="relative flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <Sparkles className="size-5 text-amber" aria-hidden />
+              <h2 className="font-display text-h2">Insights</h2>
+            </div>
+            <span className="text-micro uppercase tracking-wider rounded-pill bg-cream/15 px-2 py-1">
+              7-day report
+            </span>
+          </div>
+          <p className="relative text-small text-cream/80 mt-1">
+            What Pippa is seeing in {name ? `${name}'s` : "your baby's"} routines.
+          </p>
+          <ul className="relative grid grid-cols-3 gap-3 mt-4">
+            <InsightStat
+              variant="sleep"
+              label="Sleep"
+              value={
+                insights ? `${insights.sleepHrPerDay.toFixed(1)}h/d` : "—"
+              }
+            />
+            <InsightStat
+              variant="feed"
+              label="Feeds"
+              value={
+                insights ? `${insights.feedsPerDay.toFixed(1)}/d` : "—"
+              }
+            />
+            <InsightStat
+              variant="diaper"
+              label="Diapers"
+              value={
+                insights ? `${insights.diapersPerDay.toFixed(1)}/d` : "—"
+              }
+            />
+          </ul>
+          <p className="relative text-small text-cream/85 leading-relaxed mt-4">
+            {insights
+              ? insightNarrative(insights, name)
+              : "Crunching the numbers…"}
+          </p>
+          <div className="relative flex items-center gap-2 mt-4">
+            <Link
+              href="/trackers/insights"
+              className="rounded-pill bg-amber text-ink h-12 px-5 inline-flex items-center gap-2 text-small font-semibold hover:bg-amber/90 transition-colors shadow-[var(--shadow-pop)]"
+            >
+              <Sparkles className="size-4" aria-hidden />
+              Open full report
+            </Link>
+            <Link
+              href="/trackers/insights?print=1"
+              className="rounded-pill bg-cream/15 text-cream h-12 px-4 inline-flex items-center gap-2 text-small font-medium hover:bg-cream/25 transition-colors"
+            >
+              <FileText className="size-4" aria-hidden />
+              For pediatrician
+            </Link>
+          </div>
+        </article>
+
         <article className="rounded-2xl bg-cream p-5 shadow-[var(--shadow-soft)]">
           <div className="flex items-center justify-between gap-3">
             <h2 className="font-display text-h2 text-plum">Baby Tracker</h2>
@@ -309,72 +373,6 @@ export default function HomePage() {
             >
               Start
               <ChevronRight className="size-4" aria-hidden />
-            </Link>
-          </div>
-        </article>
-
-        <article className="rounded-2xl bg-cream p-5 shadow-[var(--shadow-soft)]">
-          <div className="flex items-center justify-between gap-3">
-            <h2 className="font-display text-h2 text-plum">Insights</h2>
-            <Link
-              href="/trackers/insights"
-              className="inline-flex items-center gap-1 text-small text-stone hover:text-ink"
-            >
-              See more
-              <ChevronRight className="size-3.5" aria-hidden />
-            </Link>
-          </div>
-          <p className="text-small text-stone mt-1">
-            A read on the last 7 days.
-          </p>
-          <ul className="grid grid-cols-3 gap-3 mt-4">
-            <InsightStat
-              variant="sleep"
-              label="Sleep"
-              value={
-                insights ? `${insights.sleepHrPerDay.toFixed(1)}h/d` : "—"
-              }
-            />
-            <InsightStat
-              variant="feed"
-              label="Feeds"
-              value={
-                insights ? `${insights.feedsPerDay.toFixed(1)}/d` : "—"
-              }
-            />
-            <InsightStat
-              variant="diaper"
-              label="Diapers"
-              value={
-                insights ? `${insights.diapersPerDay.toFixed(1)}/d` : "—"
-              }
-            />
-          </ul>
-          <p className="text-small text-stone leading-relaxed mt-4 flex items-start gap-2">
-            <Sparkles
-              className="size-4 text-plum shrink-0 mt-0.5"
-              aria-hidden
-            />
-            <span>
-              {insights
-                ? insightNarrative(insights, name)
-                : "Crunching the numbers…"}
-            </span>
-          </p>
-          <div className="flex items-center gap-2 mt-4">
-            <Link
-              href="/trackers/insights"
-              className="rounded-pill bg-plum text-cream h-11 px-4 inline-flex items-center gap-2 text-small font-medium hover:bg-plum/90 transition-colors"
-            >
-              Open full report
-              <ChevronRight className="size-4" aria-hidden />
-            </Link>
-            <Link
-              href="/trackers/insights?print=1"
-              className="rounded-pill bg-cream border border-bone h-11 px-4 inline-flex items-center gap-2 text-small font-medium text-clay shadow-[var(--shadow-soft)]"
-            >
-              <FileText className="size-4" aria-hidden />
-              For pediatrician
             </Link>
           </div>
         </article>
